@@ -1,6 +1,7 @@
 extends Node
 class_name NpcBehavior
 ## 挂在 [NekomimiWalker] 下：游荡、环境台词、**战斗 AI 状态机**（追击 / 逃跑 / 脱战）、自动拾取等。
+## 需要 NPC 与箱子/储物格交互时：拿到储物容器节点（`item_container.gd`），调用 `deposit_from_walker` / `withdraw_to_walker`（与 [ContainerPanel] 共用实现，无需 UI）。
 
 enum AiState {
 	WANDER, ## 随机游荡（由到达目标等信号驱动）

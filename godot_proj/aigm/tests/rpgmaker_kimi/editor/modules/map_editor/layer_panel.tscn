@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dk6x2v0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/modules/map_editor/layer_panel.gd" id="1_layer"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/modules/map_editor/layer_panel.gd" id="1_layer"]
 
 [node name="LayerPanel" type="Panel"]
 custom_minimum_size = Vector2(0, 200)

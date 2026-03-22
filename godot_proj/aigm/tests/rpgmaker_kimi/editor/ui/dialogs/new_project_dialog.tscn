@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dlg1x7v0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/ui/dialogs/new_project_dialog.gd" id="1_dialog"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/ui/dialogs/new_project_dialog.gd" id="1_dialog"]
 
 [node name="NewProjectDialog" type="Window"]
 title = "新建项目"

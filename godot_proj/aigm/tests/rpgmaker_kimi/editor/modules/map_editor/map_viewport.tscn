@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dk7x3v0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/modules/map_editor/map_viewport.gd" id="1_viewport"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/modules/map_editor/map_viewport.gd" id="1_viewport"]
 
 [node name="MapViewport" type="SubViewport"]
 handle_input_locally = false

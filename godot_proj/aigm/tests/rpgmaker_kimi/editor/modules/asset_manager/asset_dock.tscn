@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dk3yav0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/modules/asset_manager/asset_dock.gd" id="1_asset"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/modules/asset_manager/asset_dock.gd" id="1_asset"]
 
 [node name="AssetDock" type="Panel"]
 custom_minimum_size = Vector2(0, 150)

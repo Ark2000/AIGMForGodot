@@ -1,16 +1,14 @@
-[gd_scene format=4 uid="uid://07l0jodvcyfo"]
+[gd_scene format=4 uid="uid://ddq7cdvfd8c1o"]
 
 [ext_resource type="Texture2D" uid="uid://c86px47etpihh" path="res://tests/testsandbox/assets/prototype_floor.png" id="1_mr2xd"]
 [ext_resource type="TileSet" uid="uid://dlb8svcip16hh" path="res://tests/testsandbox/assets/new_tile_set.tres" id="2_845rj"]
-[ext_resource type="PackedScene" uid="uid://6hxu56egha6u" path="res://tests/testsandbox/scenes/nekomimi_walker.tscn" id="3_845rj"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/nekomimi_walker.tscn" id="3_845rj"]
 [ext_resource type="Texture2D" uid="uid://rxj8bms0xanc" path="res://tests/testsandbox/assets/jkmaid.png" id="4_x5f83"]
-[ext_resource type="PackedScene" uid="uid://bvpqaw5sekt8u" path="res://tests/testsandbox/scenes/ground_item.tscn" id="5_gitem"]
-[ext_resource type="PackedScene" uid="uid://ep7p8jvt2bd4" path="res://tests/testsandbox/scenes/inventory_hud.tscn" id="6_hud"]
-[ext_resource type="Script" uid="uid://b17w5px33ifpd" path="res://tests/testsandbox/scripts/world_sandbox.gd" id="7_spawn"]
-[ext_resource type="Script" uid="uid://w3hdhiwbnbva" path="res://tests/testsandbox/scripts/spectator_camera.gd" id="8_scam"]
-[ext_resource type="PackedScene" uid="uid://pjp6xvowabb5" path="res://tests/testsandbox/scenes/camera_mode_menu.tscn" id="9_cmenu"]
-[ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/container_panel.tscn" id="10_cpan"]
-[ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/item_container.tscn" id="11_ictr"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/ground_item.tscn" id="5_gitem"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/inventory_hud.tscn" id="6_hud"]
+[ext_resource type="Script" path="res://tests/testsandbox/world_sandbox.gd" id="7_spawn"]
+[ext_resource type="Script" path="res://tests/testsandbox/spectator_camera.gd" id="8_scam"]
+[ext_resource type="PackedScene" uid="uid://cqca8vyxwid5" path="res://tests/testsandbox/camera_mode_menu.tscn" id="9_cmenu"]
 
 [node name="World" type="Node2D" unique_id=550588223]
 script = ExtResource("7_spawn")
@@ -67,18 +65,6 @@ position = Vector2(396, 173)
 [node name="NpcNekomimi4" parent="YSort" unique_id=1893257144 instance=ExtResource("3_845rj")]
 position = Vector2(458, 30)
 
-[node name="StorageCrate" parent="YSort" unique_id=1432264275 instance=ExtResource("11_ictr")]
-position = Vector2(-174, 345)
-preset_item_id = "food_apple"
-preset_quantity = 8
-
-[node name="MetalChest" parent="YSort" unique_id=1913614617 instance=ExtResource("11_ictr")]
-position = Vector2(256, 378)
-display_name = "储物箱"
-preview_item_id = "misc_chest"
-preset_item_id = "misc_copper_coin"
-preset_quantity = 30
-
 [node name="SpectatorCamera" type="Camera2D" parent="." unique_id=738148233]
 zoom = Vector2(2, 2)
 position_smoothing_enabled = true
@@ -88,5 +74,3 @@ script = ExtResource("8_scam")
 [node name="CameraModeMenu" parent="." unique_id=1185739467 instance=ExtResource("9_cmenu")]
 
 [node name="InventoryHUD" parent="." unique_id=1430350429 instance=ExtResource("6_hud")]
-
-[node name="ContainerPanel" parent="." unique_id=1252081936 instance=ExtResource("10_cpan")]

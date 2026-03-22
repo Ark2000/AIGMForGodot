@@ -57,22 +57,22 @@ func _ready():
 
 func _init_dialogs():
 	# 新建项目对话框
-	new_project_dialog = preload("res://editor/ui/dialogs/new_project_dialog.tscn").instantiate()
+	new_project_dialog = preload("res://tests/rpgmaker_kimi/editor/ui/dialogs/new_project_dialog.tscn").instantiate()
 	new_project_dialog.project_created.connect(_on_project_created)
 	add_child(new_project_dialog)
 	
 	# 新建地图对话框
-	new_map_dialog = preload("res://editor/ui/dialogs/new_map_dialog.tscn").instantiate()
+	new_map_dialog = preload("res://tests/rpgmaker_kimi/editor/ui/dialogs/new_map_dialog.tscn").instantiate()
 	new_map_dialog.map_created.connect(_on_map_created)
 	add_child(new_map_dialog)
 	
 	# 数据库编辑器
-	database_editor = preload("res://editor/modules/database/database_editor.tscn").instantiate()
+	database_editor = preload("res://tests/rpgmaker_kimi/editor/modules/database/database_editor.tscn").instantiate()
 	database_editor.initialize(database_manager)
 	add_child(database_editor)
 	
 	# 事件编辑器
-	event_editor = preload("res://editor/modules/event_system/event_editor.tscn").instantiate()
+	event_editor = preload("res://tests/rpgmaker_kimi/editor/modules/event_system/event_editor.tscn").instantiate()
 	add_child(event_editor)
 
 func _connect_signals():

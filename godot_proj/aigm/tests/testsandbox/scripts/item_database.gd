@@ -130,6 +130,51 @@ static func _ensure() -> void:
 	}
 
 
+## 与 [method NekomimiWalker.add_item_to_inventory] 相同合并规则；返回**未能入格**的数量。
+static func add_items_to_slots(slots: Array, max_slots: int, item_id: String, amount: int) -> int:
+	if amount <= 0:
+		return 0
+	_ensure()
+	var def: Dictionary = get_def(item_id)
+	if def.is_empty():
+		return amount
+	var max_stack: int = int(def.get("max_stack", 99))
+	var remaining: int = amount
+	for slot in slots:
+		if str(slot.get("id", "")) == item_id:
+			var c: int = int(slot.get("count", 0))
+			if c < max_stack:
+				var take: int = mini(remaining, max_stack - c)
+				slot["count"] = c + take
+				remaining -= take
+				if remaining <= 0:
+					return 0
+	while remaining > 0:
+		if slots.size() >= max_slots:
+			break
+		var take2: int = mini(remaining, max_stack)
+		slots.append({"id": item_id, "count": take2})
+		remaining -= take2
+	return remaining
+
+
+## 从 [param slots] 的 [param slot_index] 移除至多 [param amount] 个；返回**实际移除**的数量（槽变空则删掉该格）。
+static func remove_items_from_slot(slots: Array, slot_index: int, amount: int) -> int:
+	if amount <= 0 or slot_index < 0 or slot_index >= slots.size():
+		return 0
+	var slot: Dictionary = slots[slot_index]
+	var c: int = int(slot.get("count", 0))
+	var take: int = mini(amount, c)
+	if take <= 0:
+		return 0
+	c -= take
+	if c <= 0:
+		slots.remove_at(slot_index)
+	else:
+		slot["count"] = c
+	return take
+
+
 static func _row(display_name: String, description: String, rel_path: String, category: String, max_stack: int) -> Dictionary:
 	return {
 		"name": display_name,

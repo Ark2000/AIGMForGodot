@@ -190,6 +190,10 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F:
 		if player_key_pickup:
+			var panel: Node = get_tree().get_first_node_in_group("container_panel")
+			if panel != null and panel.has_method("try_handle_f") and panel.try_handle_f(self):
+				get_viewport().set_input_as_handled()
+				return
 			pickup_item(0)
 			get_viewport().set_input_as_handled()
 		return
@@ -422,33 +426,8 @@ func pickup_item(index: int) -> void:
 
 ## 将物品加入背包，返回未能入包的数量（背包满或无效 id 时大于 0）。
 func add_item_to_inventory(item_id: String, amount: int) -> int:
-	if amount <= 0:
-		return 0
-	var def: Dictionary = ItemDB.get_def(item_id)
-	if def.is_empty():
-		return amount
-	var max_stack: int = int(def.get("max_stack", 99))
-	var remaining: int = amount
-	var changed: bool = false
-	for slot in inventory:
-		if str(slot.get("id", "")) == item_id:
-			var c: int = int(slot.get("count", 0))
-			if c < max_stack:
-				var take: int = mini(remaining, max_stack - c)
-				slot["count"] = c + take
-				remaining -= take
-				changed = true
-				if remaining <= 0:
-					inventory_changed.emit()
-					return 0
-	while remaining > 0:
-		if inventory.size() >= inventory_max_slots:
-			break
-		var take2: int = mini(remaining, max_stack)
-		inventory.append({"id": item_id, "count": take2})
-		remaining -= take2
-		changed = true
-	if changed:
+	var remaining: int = ItemDB.add_items_to_slots(inventory, inventory_max_slots, item_id, amount)
+	if remaining < amount:
 		inventory_changed.emit()
 	return remaining
 

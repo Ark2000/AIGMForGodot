@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://c8yvxg3ulq3a"]
 
-[ext_resource type="Script" path="res://editor/ui/main_editor.gd" id="1_8j1v8"]
-[ext_resource type="PackedScene" uid="uid://dk1x7v0omk0yv" path="res://editor/ui/menu_bar.tscn" id="2_3nx4l"]
-[ext_resource type="PackedScene" uid="uid://c8yvxg3ulq3b" path="res://editor/ui/main_layout.tscn" id="3_main_layout"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/ui/main_editor.gd" id="1_8j1v8"]
+[ext_resource type="PackedScene" uid="uid://dk1x7v0omk0yv" path="res://tests/rpgmaker_kimi/editor/ui/menu_bar.tscn" id="2_3nx4l"]
+[ext_resource type="PackedScene" uid="uid://c8yvxg3ulq3b" path="res://tests/rpgmaker_kimi/editor/ui/main_layout.tscn" id="3_main_layout"]
 
 [node name="Editor" type="Control"]
 layout_mode = 3

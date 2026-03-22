@@ -14,7 +14,7 @@ var _height_expanded: float = 0.0
 
 func _ready() -> void:
 	add_to_group("inventory_hud")
-	_hint.text = "F 拾取附近 | 自动拾取可在角色上关"
+	_hint.text = "F 拾取 / 靠近箱子打开 | 自动拾取可在角色上关"
 	_item_list.fixed_icon_size = Vector2i(28, 28)
 	_item_list.icon_mode = ItemList.ICON_MODE_LEFT
 	_toggle.pressed.connect(_on_toggle_pressed)

@@ -1,0 +1,104 @@
+[gd_scene format=3 uid="uid://dak4m3d8n2rxy"]
+
+[ext_resource type="Script" path="res://tests/testsandbox/scripts/container_panel.gd" id="1_script"]
+
+[node name="ContainerPanel" type="CanvasLayer"]
+layer = 25
+script = ExtResource("1_script")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelRoot" type="Panel" parent="CenterContainer"]
+custom_minimum_size = Vector2(520, 340)
+
+[node name="Margin" type="MarginContainer" parent="CenterContainer/PanelRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/PanelRoot/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "容器"
+
+[node name="HBox" type="HBoxContainer" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="PlayerVBox" type="VBoxContainer" parent="CenterContainer/PanelRoot/Margin/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Plabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/PlayerVBox"]
+layout_mode = 2
+text = "背包"
+
+[node name="PlayerList" type="ItemList" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/PlayerVBox"]
+custom_minimum_size = Vector2(200, 220)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MidButtons" type="VBoxContainer" parent="CenterContainer/PanelRoot/Margin/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="PutOneButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/MidButtons"]
+layout_mode = 2
+text = "放入 ×1"
+tooltip_text = "将背包选中格放入容器"
+
+[node name="PutAllButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/MidButtons"]
+layout_mode = 2
+text = "放入全部"
+tooltip_text = "整格堆叠放入容器"
+
+[node name="TakeOneButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/MidButtons"]
+layout_mode = 2
+text = "取出 ×1"
+tooltip_text = "从容器选中格取出到背包"
+
+[node name="TakeAllButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/MidButtons"]
+layout_mode = 2
+text = "取出全部"
+
+[node name="ContainerVBox" type="VBoxContainer" parent="CenterContainer/PanelRoot/Margin/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Clabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/ContainerVBox"]
+layout_mode = 2
+text = "容器"
+
+[node name="ContainerList" type="ItemList" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/ContainerVBox"]
+custom_minimum_size = Vector2(200, 220)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HintLabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "两侧列表各选一个格子后点中间按钮；F 关闭面板，Esc 关闭"
+autowrap_mode = 2
+
+[node name="CloseButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+text = "关闭"

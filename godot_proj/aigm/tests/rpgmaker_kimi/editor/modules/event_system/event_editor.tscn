@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://de1x7v0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/modules/event_system/event_editor.gd" id="1_event_editor"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/modules/event_system/event_editor.gd" id="1_event_editor"]
 
 [node name="EventEditor" type="Window"]
 title = "事件编辑器"

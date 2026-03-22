@@ -1,11 +1,11 @@
 [gd_scene format=3 uid="uid://c8yvxg3ulq3b"]
 
-[ext_resource type="Script" path="res://editor/ui/main_layout.gd" id="1_layout"]
-[ext_resource type="PackedScene" uid="uid://dk2x8v0omk0yv" path="res://editor/modules/map_editor/map_editor.tscn" id="2_map"]
-[ext_resource type="PackedScene" uid="uid://dk3x9v0omk0yv" path="res://editor/modules/asset_manager/asset_dock.tscn" id="3_assets"]
-[ext_resource type="PackedScene" uid="uid://dk4x0v0omk0yv" path="res://editor/modules/map_editor/tileset_panel.tscn" id="4_tileset"]
-[ext_resource type="PackedScene" uid="uid://dk5x1v0omk0yv" path="res://editor/ui/project_dock.tscn" id="5_project"]
-[ext_resource type="PackedScene" uid="uid://dk6x2v0omk0yv" path="res://editor/modules/map_editor/layer_panel.tscn" id="6_layers"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/ui/main_layout.gd" id="1_layout"]
+[ext_resource type="PackedScene" uid="uid://dk2x8v0omk0yv" path="res://tests/rpgmaker_kimi/editor/modules/map_editor/map_editor.tscn" id="2_map"]
+[ext_resource type="PackedScene" uid="uid://dk3x9v0omk0yv" path="res://tests/rpgmaker_kimi/editor/modules/asset_manager/asset_dock.tscn" id="3_assets"]
+[ext_resource type="PackedScene" uid="uid://dk4x0v0omk0yv" path="res://tests/rpgmaker_kimi/editor/modules/map_editor/tileset_panel.tscn" id="4_tileset"]
+[ext_resource type="PackedScene" uid="uid://dk5x1v0omk0yv" path="res://tests/rpgmaker_kimi/editor/ui/project_dock.tscn" id="5_project"]
+[ext_resource type="PackedScene" uid="uid://dk6x2v0omk0yv" path="res://tests/rpgmaker_kimi/editor/modules/map_editor/layer_panel.tscn" id="6_layers"]
 
 [node name="MainLayout" type="HSplitContainer"]
 layout_mode = 3

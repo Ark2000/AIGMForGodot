@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://db1x7v0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/modules/database/database_editor.gd" id="1_db_editor"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/modules/database/database_editor.gd" id="1_db_editor"]
 
 [node name="DatabaseEditor" type="Window"]
 title = "数据库"

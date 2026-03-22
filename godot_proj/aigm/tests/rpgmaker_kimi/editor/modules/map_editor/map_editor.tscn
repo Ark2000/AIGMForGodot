@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dk2x8v0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/modules/map_editor/map_editor.gd" id="1_map_editor"]
-[ext_resource type="PackedScene" uid="uid://dk7x3v0omk0yv" path="res://editor/modules/map_editor/map_viewport.tscn" id="2_viewport"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/modules/map_editor/map_editor.gd" id="1_map_editor"]
+[ext_resource type="PackedScene" uid="uid://dk7x3v0omk0yv" path="res://tests/rpgmaker_kimi/editor/modules/map_editor/map_viewport.tscn" id="2_viewport"]
 
 [node name="MapEditor" type="Panel"]
 layout_mode = 3

@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://dk5x1v0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/ui/project_dock.gd" id="1_project"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/ui/project_dock.gd" id="1_project"]
 
 [node name="ProjectDock" type="Panel"]
 layout_mode = 3

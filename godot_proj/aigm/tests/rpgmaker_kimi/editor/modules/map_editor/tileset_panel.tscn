@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dk4x0v0omk0yv"]
 
-[ext_resource type="Script" path="res://editor/modules/map_editor/tileset_panel.gd" id="1_tileset"]
+[ext_resource type="Script" path="res://tests/rpgmaker_kimi/editor/modules/map_editor/tileset_panel.gd" id="1_tileset"]
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_selected"]
 bg_color = Color(0.2, 0.6, 1, 0.5)
