@@ -1,0 +1,152 @@
+[gd_scene format=3 uid="uid://dk1x7v0omk0yv"]
+
+[ext_resource type="Script" path="res://editor/ui/menu_bar.gd" id="1_menu"]
+
+[node name="MenuBar" type="Panel"]
+custom_minimum_size = Vector2(0, 30)
+layout_mode = 3
+anchors_preset = 10
+anchor_right = 1.0
+grow_horizontal = 2
+script = ExtResource("1_menu")
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="FileMenu" type="MenuButton" parent="HBoxContainer"]
+layout_mode = 2
+text = "文件"
+item_count = 8
+popup/item_0/text = "新建项目"
+popup/item_0/id = 0
+popup/item_1/text = "打开项目"
+popup/item_1/id = 1
+popup/item_2/text = "保存项目"
+popup/item_2/id = 2
+popup/item_3/text = ""
+popup/item_3/id = 3
+popup/item_3/disabled = true
+popup/item_3/separator = true
+popup/item_4/text = "导入资源"
+popup/item_4/id = 4
+popup/item_5/text = "导出项目"
+popup/item_5/id = 5
+popup/item_6/text = ""
+popup/item_6/id = 6
+popup/item_6/disabled = true
+popup/item_6/separator = true
+popup/item_7/text = "退出"
+popup/item_7/id = 7
+
+[node name="EditMenu" type="MenuButton" parent="HBoxContainer"]
+layout_mode = 2
+text = "编辑"
+item_count = 6
+popup/item_0/text = "撤销"
+popup/item_0/id = 0
+popup/item_1/text = "重做"
+popup/item_1/id = 1
+popup/item_2/text = ""
+popup/item_2/id = 2
+popup/item_2/disabled = true
+popup/item_2/separator = true
+popup/item_3/text = "剪切"
+popup/item_3/id = 3
+popup/item_4/text = "复制"
+popup/item_4/id = 4
+popup/item_5/text = "粘贴"
+popup/item_5/id = 5
+
+[node name="ViewMenu" type="MenuButton" parent="HBoxContainer"]
+layout_mode = 2
+text = "视图"
+item_count = 5
+popup/item_0/text = "地图编辑器"
+popup/item_0/id = 0
+popup/item_1/text = "数据库"
+popup/item_1/id = 1
+popup/item_2/text = "事件编辑器"
+popup/item_2/id = 2
+popup/item_3/text = ""
+popup/item_3/id = 3
+popup/item_3/disabled = true
+popup/item_3/separator = true
+popup/item_4/text = "全屏预览"
+popup/item_4/id = 4
+
+[node name="ToolsMenu" type="MenuButton" parent="HBoxContainer"]
+layout_mode = 2
+text = "工具"
+item_count = 4
+popup/item_0/text = "数据库"
+popup/item_0/id = 0
+popup/item_1/text = "插件管理"
+popup/item_1/id = 1
+popup/item_2/text = ""
+popup/item_2/id = 2
+popup/item_2/disabled = true
+popup/item_2/separator = true
+popup/item_3/text = "选项"
+popup/item_3/id = 3
+
+[node name="HelpMenu" type="MenuButton" parent="HBoxContainer"]
+layout_mode = 2
+text = "帮助"
+item_count = 3
+popup/item_0/text = "文档"
+popup/item_0/id = 0
+popup/item_1/text = ""
+popup/item_1/id = 1
+popup/item_1/disabled = true
+popup/item_1/separator = true
+popup/item_2/text = "关于"
+popup/item_2/id = 2
+
+[node name="VSeparator" type="VSeparator" parent="HBoxContainer"]
+layout_mode = 2
+
+[node name="ToolButtons" type="HBoxContainer" parent="HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Pencil" type="Button" parent="HBoxContainer/ToolButtons"]
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "铅笔"
+
+[node name="Rectangle" type="Button" parent="HBoxContainer/ToolButtons"]
+layout_mode = 2
+toggle_mode = true
+text = "矩形"
+
+[node name="Circle" type="Button" parent="HBoxContainer/ToolButtons"]
+layout_mode = 2
+toggle_mode = true
+text = "圆形"
+
+[node name="Fill" type="Button" parent="HBoxContainer/ToolButtons"]
+layout_mode = 2
+toggle_mode = true
+text = "填充"
+
+[node name="Erase" type="Button" parent="HBoxContainer/ToolButtons"]
+layout_mode = 2
+toggle_mode = true
+text = "橡皮"
+
+[node name="VSeparator2" type="VSeparator" parent="HBoxContainer/ToolButtons"]
+layout_mode = 2
+
+[node name="Undo" type="Button" parent="HBoxContainer/ToolButtons"]
+layout_mode = 2
+text = "撤销"
+
+[node name="Redo" type="Button" parent="HBoxContainer/ToolButtons"]
+layout_mode = 2
+text = "重做"

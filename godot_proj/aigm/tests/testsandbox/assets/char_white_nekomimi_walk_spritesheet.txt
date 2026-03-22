@@ -1,0 +1,36 @@
+资源：char_white_nekomimi_walk_spritesheet.png
+类型：2D 像素风角色行走精灵表（8 方向，每向 3 帧循环）
+
+角色概览
+  白长发、头顶猫耳（nekomimi）、Q 版比例；灰色短袖翻领上衣、白色百褶短裙、棕色鞋。粗描边像素块面，适合俯视/斜 45° RPG。
+
+布局
+  网格：6 列 × 4 行，共 24 帧。
+  索引（行优先）：frame = row * 6 + col，row∈[0,3]，col∈[0,5]。
+  Godot Sprite2D：Hframes = 6，Vframes = 4，frame 为 0～23。
+
+每行从左到右，每连续 3 格为一个朝向的走路三连帧（中间帧多为“站立/过渡”）。
+
+  第 1 行（row=0）：col 0～2 朝下（正面）；col 3～5 左下斜向（down_left）
+  第 2 行（row=1）：col 0～2 朝左（侧视）；col 3～5 右下斜向（down_right）
+  第 3 行（row=2）：col 0～2 朝右（侧视）；col 3～5 左上斜向（up_left）
+  第 4 行（row=3）：col 0～2 朝上（背影）；col 3～5 右上斜向（up_right）
+
+与 nekomimi_walker.gd 中 _FRAMES 一致的帧列表（每向 3 帧）
+  down:       0, 1, 2
+  down_left:  3, 4, 5
+  left:       6, 7, 8
+  down_right: 9, 10, 11
+  right:      12, 13, 14
+  up_left:    15, 16, 17
+  up:         18, 19, 20
+  up_right:   21, 22, 23
+
+行走播放
+  本地三连帧可按 0→1→2→1→0… 乒乓循环（与脚本中 _WALK_LOCAL_PINGPONG 一致），比单纯 0→1→2 循环更顺滑。
+
+背景
+  若贴图为纯黑底，可在引擎中按需设透明色键或改用带 Alpha 的 PNG。
+
+工程路径
+  场景 `res://tests/testsandbox/scenes/nekomimi_walker.tscn` 引用本图 `res://tests/testsandbox/assets/char_white_nekomimi_walk_spritesheet.png`。

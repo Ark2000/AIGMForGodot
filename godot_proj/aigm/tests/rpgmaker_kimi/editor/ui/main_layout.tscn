@@ -1,0 +1,78 @@
+[gd_scene format=3 uid="uid://c8yvxg3ulq3b"]
+
+[ext_resource type="Script" path="res://editor/ui/main_layout.gd" id="1_layout"]
+[ext_resource type="PackedScene" uid="uid://dk2x8v0omk0yv" path="res://editor/modules/map_editor/map_editor.tscn" id="2_map"]
+[ext_resource type="PackedScene" uid="uid://dk3x9v0omk0yv" path="res://editor/modules/asset_manager/asset_dock.tscn" id="3_assets"]
+[ext_resource type="PackedScene" uid="uid://dk4x0v0omk0yv" path="res://editor/modules/map_editor/tileset_panel.tscn" id="4_tileset"]
+[ext_resource type="PackedScene" uid="uid://dk5x1v0omk0yv" path="res://editor/ui/project_dock.tscn" id="5_project"]
+[ext_resource type="PackedScene" uid="uid://dk6x2v0omk0yv" path="res://editor/modules/map_editor/layer_panel.tscn" id="6_layers"]
+
+[node name="MainLayout" type="HSplitContainer"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+split_offset = 250
+script = ExtResource("1_layout")
+
+[node name="LeftPanel" type="VSplitContainer" parent="."]
+layout_mode = 2
+split_offset = 300
+
+[node name="ProjectDock" parent="LeftPanel" instance=ExtResource("5_project")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="TilesetPanel" parent="LeftPanel" instance=ExtResource("4_tileset")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="CenterPanel" type="VSplitContainer" parent="."]
+layout_mode = 2
+size_flags_horizontal = 3
+split_offset = 400
+
+[node name="MapEditor" parent="CenterPanel" instance=ExtResource("2_map")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="AssetDock" parent="CenterPanel" instance=ExtResource("3_assets")]
+layout_mode = 2
+custom_minimum_size = Vector2(0, 200)
+
+[node name="RightPanel" type="VSplitContainer" parent="."]
+layout_mode = 2
+split_offset = 300
+
+[node name="LayerPanel" parent="RightPanel" instance=ExtResource("6_layers")]
+layout_mode = 2
+
+[node name="PropertiesPanel" type="Panel" parent="RightPanel"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="VBoxContainer" type="VBoxContainer" parent="RightPanel/PropertiesPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="RightPanel/PropertiesPanel/VBoxContainer"]
+layout_mode = 2
+text = "属性"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="RightPanel/PropertiesPanel/VBoxContainer"]
+layout_mode = 2
+
+[node name="ScrollContainer" type="ScrollContainer" parent="RightPanel/PropertiesPanel/VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="PropertyList" type="VBoxContainer" parent="RightPanel/PropertiesPanel/VBoxContainer/ScrollContainer"]
+layout_mode = 2
+size_flags_horizontal = 3

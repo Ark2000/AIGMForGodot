@@ -1,0 +1,125 @@
+[gd_scene format=3 uid="uid://de1x7v0omk0yv"]
+
+[ext_resource type="Script" path="res://editor/modules/event_system/event_editor.gd" id="1_event_editor"]
+
+[node name="EventEditor" type="Window"]
+title = "事件编辑器"
+initial_position = 2
+size = Vector2i(800, 600)
+visible = false
+script = ExtResource("1_event_editor")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="BasicInfo" type="GridContainer" parent="VBoxContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="NameLabel" type="Label" parent="VBoxContainer/BasicInfo"]
+layout_mode = 2
+text = "名称:"
+
+[node name="NameEdit" type="LineEdit" parent="VBoxContainer/BasicInfo"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="TriggerLabel" type="Label" parent="VBoxContainer/BasicInfo"]
+layout_mode = 2
+text = "触发条件:"
+
+[node name="TriggerSelector" type="OptionButton" parent="VBoxContainer/BasicInfo"]
+layout_mode = 2
+item_count = 5
+popup/item_0/text = "确定键"
+popup/item_0/id = 0
+popup/item_1/text = "玩家接触"
+popup/item_1/id = 1
+popup/item_2/text = "事件接触"
+popup/item_2/id = 2
+popup/item_3/text = "自动执行"
+popup/item_3/id = 3
+popup/item_4/text = "并行处理"
+popup/item_4/id = 4
+
+[node name="GraphicLabel" type="Label" parent="VBoxContainer/BasicInfo"]
+layout_mode = 2
+text = "图像:"
+
+[node name="GraphicSelector" type="Button" parent="VBoxContainer/BasicInfo"]
+layout_mode = 2
+text = "选择..."
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="CommandLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "指令列表"
+
+[node name="CommandToolbar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="AddCommand" type="MenuButton" parent="VBoxContainer/CommandToolbar"]
+layout_mode = 2
+text = "添加指令"
+item_count = 10
+popup/item_0/text = "显示文字"
+popup/item_0/id = 101
+popup/item_1/text = "显示选项"
+popup/item_1/id = 102
+popup/item_2/text = "输入数值"
+popup/item_2/id = 103
+popup/item_3/text = "条件分支"
+popup/item_3/id = 111
+popup/item_4/text = "循环"
+popup/item_4/id = 112
+popup/item_5/text = "中断循环"
+popup/item_5/id = 113
+popup/item_6/text = "设置开关"
+popup/item_6/id = 121
+popup/item_7/text = "设置变量"
+popup/item_7/id = 122
+popup/item_8/text = "移动路线"
+popup/item_8/id = 205
+popup/item_9/text = "更改画面色调"
+popup/item_9/id = 223
+
+[node name="EditCommand" type="Button" parent="VBoxContainer/CommandToolbar"]
+layout_mode = 2
+text = "编辑"
+
+[node name="DeleteCommand" type="Button" parent="VBoxContainer/CommandToolbar"]
+layout_mode = 2
+text = "删除"
+
+[node name="MoveUp" type="Button" parent="VBoxContainer/CommandToolbar"]
+layout_mode = 2
+text = "↑"
+
+[node name="MoveDown" type="Button" parent="VBoxContainer/CommandToolbar"]
+layout_mode = 2
+text = "↓"
+
+[node name="CommandList" type="ItemList" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HSeparator2" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonBar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="OkBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "确定"
+
+[node name="CancelBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "取消"

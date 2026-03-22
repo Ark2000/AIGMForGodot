@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://dvl5colbk1d1t"]
+
+[ext_resource type="Texture2D" uid="uid://ckvup8tlv2lh4" path="res://tests/llm_talk_cursor/sample_image.jpg" id="1_3i7xc"]
+[ext_resource type="PackedScene" uid="uid://bmjcarhl8s7vj" path="res://tests/llm_talk_cursor/llm_talk_cursor.tscn" id="2_f36a7"]
+
+[node name="Main" type="Node2D" unique_id=349158067]
+
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=1468580136]
+
+[node name="TextureRect" type="TextureRect" parent="CanvasLayer" unique_id=383312049]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("1_3i7xc")
+expand_mode = 1
+
+[node name="CanvasLayer2" type="CanvasLayer" parent="." unique_id=2049702205]
+
+[node name="LlmTalkCursor" parent="CanvasLayer2" unique_id=1600061840 instance=ExtResource("2_f36a7")]
+modulate = Color(1, 1, 1, 0.92156863)

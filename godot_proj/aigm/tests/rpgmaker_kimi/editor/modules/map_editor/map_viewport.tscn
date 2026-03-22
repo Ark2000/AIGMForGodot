@@ -1,0 +1,21 @@
+[gd_scene format=3 uid="uid://dk7x3v0omk0yv"]
+
+[ext_resource type="Script" path="res://editor/modules/map_editor/map_viewport.gd" id="1_viewport"]
+
+[node name="MapViewport" type="SubViewport"]
+handle_input_locally = false
+size = Vector2i(800, 600)
+script = ExtResource("1_viewport")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(400, 300)
+
+[node name="MapRoot" type="Node2D" parent="."]
+
+[node name="TileLayers" type="Node2D" parent="MapRoot"]
+
+[node name="EventLayer" type="Node2D" parent="MapRoot"]
+
+[node name="GridOverlay" type="Node2D" parent="MapRoot"]
+
+[node name="SelectionOverlay" type="Node2D" parent="MapRoot"]

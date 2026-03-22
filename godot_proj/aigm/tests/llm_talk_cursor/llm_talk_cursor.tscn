@@ -11,6 +11,15 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_fqf8i")
 
+[node name="ColorRect" type="ColorRect" parent="." unique_id=767422848]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
 [node name="MarginContainer" type="MarginContainer" parent="." unique_id=592109249]
 layout_mode = 1
 anchors_preset = 15
@@ -37,11 +46,10 @@ text = "Godot LLM 多轮对话（流式）"
 [node name="ChatLog" type="RichTextLabel" parent="MarginContainer/VBoxContainer" unique_id=143539606]
 layout_mode = 2
 size_flags_vertical = 3
+focus_mode = 1
 bbcode_enabled = true
 scroll_following = true
 selection_enabled = true
-fit_content = false
-autowrap_mode = 3
 
 [node name="InputRow" type="HBoxContainer" parent="MarginContainer/VBoxContainer" unique_id=1774833799]
 layout_mode = 2

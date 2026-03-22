@@ -1,0 +1,111 @@
+[gd_scene format=3 uid="uid://6hxu56egha6u"]
+
+[ext_resource type="Texture2D" uid="uid://o5x6dj1sqn2w" path="res://tests/testsandbox/assets/char_white_nekomimi_walk_spritesheet.png" id="1_tex"]
+[ext_resource type="Script" uid="uid://cxoi3865ko8vo" path="res://tests/testsandbox/scripts/nekomimi_walker.gd" id="2_script"]
+[ext_resource type="Script" uid="uid://c7npcbhvr8w01" path="res://tests/testsandbox/scripts/npc_behavior.gd" id="3_npcbeh"]
+[ext_resource type="Texture2D" uid="uid://xwp1tkfvwl4m" path="res://tests/testsandbox/assets/fist.png" id="4_fist"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_t4byi"]
+radius = 15.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pickup"]
+radius = 32.0
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_hurt"]
+radius = 20.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_fist"]
+size = Vector2(22, 18)
+
+[node name="NekomimiWalker" type="CharacterBody2D" unique_id=1227036973]
+motion_mode = 1
+script = ExtResource("2_script")
+player_auto_pickup = false
+
+[node name="NavigationAgent2D" type="NavigationAgent2D" parent="." unique_id=1296641207]
+path_desired_distance = 14.0
+path_postprocessing = 1
+avoidance_enabled = true
+debug_enabled = true
+debug_path_custom_color = Color(1, 0, 0, 1)
+
+[node name="NpcBehavior" type="Node" parent="." unique_id=1398224595]
+script = ExtResource("3_npcbeh")
+ai_attack_interval = 2.0
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1296641206]
+texture_filter = 1
+position = Vector2(0, -51)
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("1_tex")
+hframes = 6
+vframes = 4
+frame = 1
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1658679657]
+position = Vector2(0, -18)
+shape = SubResource("CircleShape2D_t4byi")
+
+[node name="PickupArea" type="Area2D" parent="." unique_id=1446320325]
+collision_layer = 0
+collision_mask = 16
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="PickupArea" unique_id=1420464258]
+position = Vector2(0, -18)
+shape = SubResource("CircleShape2D_pickup")
+debug_color = Color(0.6509804, 0.41960785, 0.79607844, 0.0627451)
+
+[node name="HurtArea" type="Area2D" parent="." unique_id=1326710424]
+collision_layer = 32
+collision_mask = 0
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="HurtArea" unique_id=299764756]
+position = Vector2(0, -18)
+shape = SubResource("CircleShape2D_hurt")
+
+[node name="AttackSwingPivot" type="Node2D" parent="." unique_id=1455524667]
+visible = false
+z_index = 2
+position = Vector2(0, -36)
+
+[node name="AttackSwingArea" type="Area2D" parent="AttackSwingPivot" unique_id=1995888321]
+collision_layer = 0
+collision_mask = 32
+monitoring = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="AttackSwingPivot/AttackSwingArea" unique_id=1793649802]
+position = Vector2(26, 0)
+shape = SubResource("RectangleShape2D_fist")
+
+[node name="FistSprite" type="Sprite2D" parent="AttackSwingPivot" unique_id=312130227]
+texture_filter = 1
+position = Vector2(26, 0)
+rotation = -1.5708
+scale = Vector2(0.45, 0.45)
+texture = ExtResource("4_fist")
+flip_v = true
+
+[node name="Control" type="Control" parent="." unique_id=1047317122]
+z_index = 1
+z_as_relative = false
+layout_mode = 3
+anchors_preset = 0
+offset_left = -24.0
+offset_top = -82.0
+offset_right = 25.0
+
+[node name="Label" type="Label" parent="Control" unique_id=461332342]
+layout_mode = 1
+anchors_preset = -1
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -100.0
+offset_top = -21.0
+offset_right = 100.0
+offset_bottom = 2.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_font_sizes/font_size = 16
+horizontal_alignment = 1
+autowrap_mode = 1

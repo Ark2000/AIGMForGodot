@@ -1,0 +1,71 @@
+[gd_scene format=3 uid="uid://dk6x2v0omk0yv"]
+
+[ext_resource type="Script" path="res://editor/modules/map_editor/layer_panel.gd" id="1_layer"]
+
+[node name="LayerPanel" type="Panel"]
+custom_minimum_size = Vector2(0, 200)
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_layer")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Label" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "图层"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="Toolbar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="AddLayer" type="Button" parent="VBoxContainer/Toolbar"]
+layout_mode = 2
+text = "+"
+
+[node name="DeleteLayer" type="Button" parent="VBoxContainer/Toolbar"]
+layout_mode = 2
+text = "-"
+
+[node name="MoveUp" type="Button" parent="VBoxContainer/Toolbar"]
+layout_mode = 2
+text = "↑"
+
+[node name="MoveDown" type="Button" parent="VBoxContainer/Toolbar"]
+layout_mode = 2
+text = "↓"
+
+[node name="LayerList" type="ItemList" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+select_mode = 1
+
+[node name="BottomBar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="VisibilityToggle" type="CheckButton" parent="VBoxContainer/BottomBar"]
+layout_mode = 2
+button_pressed = true
+text = "可见"
+
+[node name="OpacityLabel" type="Label" parent="VBoxContainer/BottomBar"]
+layout_mode = 2
+text = "不透明度"
+
+[node name="OpacitySlider" type="HSlider" parent="VBoxContainer/BottomBar"]
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+value = 255.0

@@ -1,0 +1,84 @@
+[gd_scene load_steps=2 format=3 uid="uid://dlg2x7v0omk0yv"]
+
+[ext_resource type="Script" path="res://editor/ui/dialogs/new_map_dialog.gd" id="1_dialog"]
+
+[node name="NewMapDialog" type="Window"]
+title = "新建地图"
+initial_position = 2
+size = Vector2i(400, 300)
+unresizable = true
+script = ExtResource("1_dialog")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="NameLabel" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+text = "地图名称:"
+
+[node name="NameEdit" type="LineEdit" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "MAP001"
+
+[node name="DisplayNameLabel" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+text = "显示名称:"
+
+[node name="DisplayNameEdit" type="LineEdit" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="WidthLabel" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+text = "宽度 (图块):"
+
+[node name="WidthSpin" type="SpinBox" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+min_value = 1.0
+max_value = 256.0
+value = 20.0
+
+[node name="HeightLabel" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+text = "高度 (图块):"
+
+[node name="HeightSpin" type="SpinBox" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+min_value = 1.0
+max_value = 256.0
+value = 15.0
+
+[node name="TilesetLabel" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+text = "图块集:"
+
+[node name="TilesetSelector" type="OptionButton" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="Spacer" type="Control" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ButtonBar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="OkBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "确定"
+
+[node name="CancelBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "取消"

@@ -1,0 +1,117 @@
+[gd_scene load_steps=2 format=3 uid="uid://dlg1x7v0omk0yv"]
+
+[ext_resource type="Script" path="res://editor/ui/dialogs/new_project_dialog.gd" id="1_dialog"]
+
+[node name="NewProjectDialog" type="Window"]
+title = "新建项目"
+initial_position = 2
+size = Vector2i(500, 300)
+unresizable = true
+script = ExtResource("1_dialog")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 10.0
+offset_right = -10.0
+offset_bottom = -10.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="GridContainer" type="GridContainer" parent="VBoxContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="NameLabel" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+text = "项目名称:"
+
+[node name="NameEdit" type="LineEdit" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "未命名项目"
+
+[node name="LocationLabel" type="Label" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+text = "项目位置:"
+
+[node name="LocationHBox" type="HBoxContainer" parent="VBoxContainer/GridContainer"]
+layout_mode = 2
+
+[node name="LocationEdit" type="LineEdit" parent="VBoxContainer/GridContainer/LocationHBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BrowseBtn" type="Button" parent="VBoxContainer/GridContainer/LocationHBox"]
+layout_mode = 2
+text = "浏览..."
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="SettingsLabel" type="Label" parent="VBoxContainer"]
+layout_mode = 2
+text = "项目设置"
+
+[node name="SettingsGrid" type="GridContainer" parent="VBoxContainer"]
+layout_mode = 2
+columns = 2
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer/SettingsGrid"]
+layout_mode = 2
+text = "游戏标题:"
+
+[node name="TitleEdit" type="LineEdit" parent="VBoxContainer/SettingsGrid"]
+layout_mode = 2
+text = "未命名游戏"
+
+[node name="ScreenSizeLabel" type="Label" parent="VBoxContainer/SettingsGrid"]
+layout_mode = 2
+text = "屏幕尺寸:"
+
+[node name="ScreenSizeHBox" type="HBoxContainer" parent="VBoxContainer/SettingsGrid"]
+layout_mode = 2
+
+[node name="WidthSpin" type="SpinBox" parent="VBoxContainer/SettingsGrid/ScreenSizeHBox"]
+layout_mode = 2
+min_value = 320.0
+max_value = 1920.0
+value = 816.0
+
+[node name="XLabel" type="Label" parent="VBoxContainer/SettingsGrid/ScreenSizeHBox"]
+layout_mode = 2
+text = "x"
+
+[node name="HeightSpin" type="SpinBox" parent="VBoxContainer/SettingsGrid/ScreenSizeHBox"]
+layout_mode = 2
+min_value = 240.0
+max_value = 1080.0
+value = 624.0
+
+[node name="TileSizeLabel" type="Label" parent="VBoxContainer/SettingsGrid"]
+layout_mode = 2
+text = "图块大小:"
+
+[node name="TileSizeSpin" type="SpinBox" parent="VBoxContainer/SettingsGrid"]
+layout_mode = 2
+min_value = 16.0
+max_value = 64.0
+value = 32.0
+
+[node name="Spacer" type="Control" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="ButtonBar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="OkBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "确定"
+
+[node name="CancelBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "取消"

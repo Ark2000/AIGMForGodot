@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://c8yvxg3ulq3a"]
+
+[ext_resource type="Script" path="res://editor/ui/main_editor.gd" id="1_8j1v8"]
+[ext_resource type="PackedScene" uid="uid://dk1x7v0omk0yv" path="res://editor/ui/menu_bar.tscn" id="2_3nx4l"]
+[ext_resource type="PackedScene" uid="uid://c8yvxg3ulq3b" path="res://editor/ui/main_layout.tscn" id="3_main_layout"]
+
+[node name="Editor" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_8j1v8")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="MenuBar" parent="VBoxContainer" instance=ExtResource("2_3nx4l")]
+layout_mode = 2
+
+[node name="MainLayout" parent="VBoxContainer" instance=ExtResource("3_main_layout")]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="StatusBar" type="Panel" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+
+[node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer/StatusBar"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="StatusLabel" type="Label" parent="VBoxContainer/StatusBar/HBoxContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "就绪"
+
+[node name="ZoomLabel" type="Label" parent="VBoxContainer/StatusBar/HBoxContainer"]
+layout_mode = 2
+text = "100%"
+
+[node name="PositionLabel" type="Label" parent="VBoxContainer/StatusBar/HBoxContainer"]
+layout_mode = 2
+text = "X: 0, Y: 0"

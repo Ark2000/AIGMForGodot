@@ -1,0 +1,153 @@
+[gd_scene format=3 uid="uid://db1x7v0omk0yv"]
+
+[ext_resource type="Script" path="res://editor/modules/database/database_editor.gd" id="1_db_editor"]
+
+[node name="DatabaseEditor" type="Window"]
+title = "数据库"
+initial_position = 2
+size = Vector2i(1000, 700)
+visible = false
+script = ExtResource("1_db_editor")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TabContainer" type="TabContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="角色" type="HBoxContainer" parent="VBoxContainer/TabContainer"]
+layout_mode = 2
+
+[node name="ActorList" type="ItemList" parent="VBoxContainer/TabContainer/角色"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="VSeparator" type="VSeparator" parent="VBoxContainer/TabContainer/角色"]
+layout_mode = 2
+
+[node name="ActorEditor" type="VBoxContainer" parent="VBoxContainer/TabContainer/角色"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="BasicInfo" type="GridContainer" parent="VBoxContainer/TabContainer/角色/ActorEditor"]
+layout_mode = 2
+columns = 2
+
+[node name="NameLabel" type="Label" parent="VBoxContainer/TabContainer/角色/ActorEditor/BasicInfo"]
+layout_mode = 2
+text = "名称:"
+
+[node name="NameEdit" type="LineEdit" parent="VBoxContainer/TabContainer/角色/ActorEditor/BasicInfo"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="ClassLabel" type="Label" parent="VBoxContainer/TabContainer/角色/ActorEditor/BasicInfo"]
+layout_mode = 2
+text = "职业:"
+
+[node name="ClassSelector" type="OptionButton" parent="VBoxContainer/TabContainer/角色/ActorEditor/BasicInfo"]
+layout_mode = 2
+
+[node name="InitialLevelLabel" type="Label" parent="VBoxContainer/TabContainer/角色/ActorEditor/BasicInfo"]
+layout_mode = 2
+text = "初始等级:"
+
+[node name="InitialLevelSpin" type="SpinBox" parent="VBoxContainer/TabContainer/角色/ActorEditor/BasicInfo"]
+layout_mode = 2
+min_value = 1.0
+max_value = 99.0
+value = 1.0
+
+[node name="MaxLevelLabel" type="Label" parent="VBoxContainer/TabContainer/角色/ActorEditor/BasicInfo"]
+layout_mode = 2
+text = "最高等级:"
+
+[node name="MaxLevelSpin" type="SpinBox" parent="VBoxContainer/TabContainer/角色/ActorEditor/BasicInfo"]
+layout_mode = 2
+min_value = 1.0
+max_value = 99.0
+value = 99.0
+
+[node name="职业" type="HBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="ClassList" type="ItemList" parent="VBoxContainer/TabContainer/职业"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="技能" type="HBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="SkillList" type="ItemList" parent="VBoxContainer/TabContainer/技能"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="物品" type="HBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="ItemList" type="ItemList" parent="VBoxContainer/TabContainer/物品"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="武器" type="HBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="WeaponList" type="ItemList" parent="VBoxContainer/TabContainer/武器"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="防具" type="HBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="ArmorList" type="ItemList" parent="VBoxContainer/TabContainer/防具"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="敌人" type="HBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="EnemyList" type="ItemList" parent="VBoxContainer/TabContainer/敌人"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="图块集" type="HBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="TilesetList" type="ItemList" parent="VBoxContainer/TabContainer/图块集"]
+custom_minimum_size = Vector2(200, 0)
+layout_mode = 2
+
+[node name="系统" type="VBoxContainer" parent="VBoxContainer/TabContainer"]
+visible = false
+layout_mode = 2
+
+[node name="HSeparator" type="HSeparator" parent="VBoxContainer"]
+layout_mode = 2
+
+[node name="ButtonBar" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+alignment = 2
+
+[node name="ApplyBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "应用"
+
+[node name="OkBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "确定"
+
+[node name="CancelBtn" type="Button" parent="VBoxContainer/ButtonBar"]
+layout_mode = 2
+text = "取消"

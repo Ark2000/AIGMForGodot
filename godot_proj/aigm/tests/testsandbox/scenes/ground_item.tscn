@@ -1,0 +1,47 @@
+[gd_scene format=3 uid="uid://bvpqaw5sekt8u"]
+
+[ext_resource type="Script" uid="uid://r4t8meggb12r" path="res://tests/testsandbox/scripts/ground_item.gd" id="1_ground"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_pick"]
+radius = 12.0
+
+[sub_resource type="LabelSettings" id="LabelSettings_dsosy"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_prox"]
+radius = 120.0
+
+[node name="GroundItem" type="Area2D" unique_id=1547403698]
+collision_layer = 16
+collision_mask = 0
+script = ExtResource("1_ground")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=879462203]
+texture_filter = 1
+position = Vector2(0, -14)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=42262668]
+position = Vector2(0, -14)
+shape = SubResource("CircleShape2D_pick")
+
+[node name="NameLabel" type="Label" parent="." unique_id=679329571]
+z_index = 2
+z_as_relative = false
+custom_minimum_size = Vector2(192, 28)
+offset_left = -96.0
+offset_top = 6.0
+offset_right = -95.0
+offset_bottom = 29.0
+theme_override_colors/font_outline_color = Color(0, 0, 0, 0.92)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 12
+label_settings = SubResource("LabelSettings_dsosy")
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ProximityArea" type="Area2D" parent="." unique_id=820017081]
+collision_layer = 0
+monitorable = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="ProximityArea" unique_id=288935486]
+position = Vector2(0, -14)
+shape = SubResource("CircleShape2D_prox")
