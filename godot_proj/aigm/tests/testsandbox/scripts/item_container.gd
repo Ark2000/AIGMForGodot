@@ -1,8 +1,8 @@
 extends Node2D
 ## 场景中的储物容器：玩家在交互范围内按 [kbd]F[/kbd] 打开 [ContainerPanel] 存取物品。
 ##
-## **与 NPC / AI 的接口**：所有「背包 ↔ 容器」的实质操作都通过下面两个方法完成（[ContainerPanel] 内部也调用它们）。
-## 在 [NpcBehavior] 或其它 AI 里，拿到目标 [ItemContainer] 与 [NekomimiWalker] 引用后即可调用，无需 UI。
+## **脚本侧接口**：所有「背包 ↔ 容器」的实质操作都通过下面两个方法完成（[ContainerPanel] 内部也调用它们）。
+## 在 [NpcBehavior] 或其它逻辑里，拿到容器节点与 [NekomimiWalker] 引用后即可调用，无需 UI。
 ## [code]amount == -1[/code] 表示该格**全部**可转移数量（整格）。
 
 signal storage_changed
@@ -13,8 +13,11 @@ signal storage_changed
 ## 用于 [Sprite2D] 展示的 [ItemDB] id（如图标）。
 @export var preview_item_id: String = "misc_crate"
 ## 开局向容器放入（便于测试）；正式关卡可在编辑器里清空。
+## 若 [member initial_stacks] 非空，则**只**使用列表，忽略本两项。
 @export var preset_item_id: String = ""
 @export var preset_quantity: int = 0
+## 关卡编辑器用：开局放入容器的多组物品。在 Inspector 里改 Array 大小，每项选「新建 ItemStackPreset」并填 [member ItemStackPreset.item_id] / [member ItemStackPreset.quantity]。
+@export var initial_stacks: Array[ItemStackPreset] = []
 
 var storage: Array[Dictionary] = []
 
@@ -33,7 +36,14 @@ func _ready() -> void:
 	_interact_area.body_entered.connect(_on_body_entered)
 	_interact_area.body_exited.connect(_on_body_exited)
 	_refresh_sprite()
-	if not preset_item_id.is_empty() and preset_quantity > 0:
+	if initial_stacks.size() > 0:
+		for s in initial_stacks:
+			if s == null:
+				continue
+			if s.item_id.is_empty() or s.quantity <= 0:
+				continue
+			ItemDB.add_items_to_slots(storage, inventory_max_slots, s.item_id, s.quantity)
+	elif not preset_item_id.is_empty() and preset_quantity > 0:
 		ItemDB.add_items_to_slots(storage, inventory_max_slots, preset_item_id, preset_quantity)
 	if _hint != null:
 		_hint.visible = false

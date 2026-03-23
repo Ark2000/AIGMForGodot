@@ -1,0 +1,106 @@
+[gd_scene format=3 uid="uid://bxwdxjmemxw6b"]
+
+[ext_resource type="Script" uid="uid://2jkdem2lcldx" path="res://tests/testsandbox/scripts/debug_panel.gd" id="1_dbg"]
+[ext_resource type="StyleBox" uid="uid://cv1ypnlbbntvp" path="res://tests/testsandbox/assets/new_style_box_flat.tres" id="2_4tllc"]
+
+[node name="DebugPanel" type="CanvasLayer" unique_id=1694320360]
+script = ExtResource("1_dbg")
+
+[node name="ItemContextMenu" type="PopupMenu" parent="." unique_id=1363942044]
+
+[node name="Panel" type="Panel" parent="." unique_id=484747694]
+clip_contents = true
+offset_left = 12.0
+offset_top = 12.0
+offset_right = 394.0
+offset_bottom = 394.0
+theme_override_styles/panel = ExtResource("2_4tllc")
+
+[node name="Margin" type="MarginContainer" parent="Panel" unique_id=1963733452]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 2
+theme_override_constants/margin_top = 2
+theme_override_constants/margin_right = 2
+theme_override_constants/margin_bottom = 2
+
+[node name="VBox" type="VBoxContainer" parent="Panel/Margin" unique_id=1112741796]
+layout_mode = 2
+theme_override_constants/separation = 3
+
+[node name="ToggleButton" type="Button" parent="Panel/Margin/VBox" unique_id=1172323175]
+layout_mode = 2
+focus_mode = 0
+mouse_default_cursor_shape = 2
+theme_override_font_sizes/font_size = 16
+text = "▶ 调试面板"
+flat = true
+
+[node name="FoldContent" type="VBoxContainer" parent="Panel/Margin/VBox" unique_id=1080715360]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 3
+
+[node name="CamLabel" type="Label" parent="Panel/Margin/VBox/FoldContent" unique_id=1869887852]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "摄像机"
+
+[node name="ModeOption" type="OptionButton" parent="Panel/Margin/VBox/FoldContent" unique_id=192515389]
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+
+[node name="ControlUserCheck" type="CheckBox" parent="Panel/Margin/VBox/FoldContent" unique_id=1053397095]
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+text = "操控当前跟镜角色"
+
+[node name="StatsLine" type="Label" parent="Panel/Margin/VBox/FoldContent" unique_id=1311879634]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "—"
+
+[node name="HSeparator" type="HSeparator" parent="Panel/Margin/VBox/FoldContent" unique_id=2021016497]
+layout_mode = 2
+
+[node name="InvLabel" type="Label" parent="Panel/Margin/VBox/FoldContent" unique_id=1227396581]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "背包"
+
+[node name="ItemList" type="ItemList" parent="Panel/Margin/VBox/FoldContent" unique_id=58483208]
+custom_minimum_size = Vector2(100, 60)
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 16
+icon_mode = 0
+fixed_icon_size = Vector2i(18, 18)
+
+[node name="HintLabel" type="Label" parent="Panel/Margin/VBox/FoldContent" unique_id=870631941]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "F 拾取"
+
+[node name="HSeparator2" type="HSeparator" parent="Panel/Margin/VBox/FoldContent" unique_id=1936038122]
+layout_mode = 2
+
+[node name="SpawnLabel" type="Label" parent="Panel/Margin/VBox/FoldContent" unique_id=242448993]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "刷道具（ItemDB）"
+
+[node name="SpawnItemOption" type="OptionButton" parent="Panel/Margin/VBox/FoldContent" unique_id=885165927]
+layout_mode = 2
+focus_mode = 0
+theme_override_font_sizes/font_size = 16
+
+[node name="SpawnKeyHint" type="Label" parent="Panel/Margin/VBox/FoldContent" unique_id=875056303]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "按 1：在鼠标位置生成"

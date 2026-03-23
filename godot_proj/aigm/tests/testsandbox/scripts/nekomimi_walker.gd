@@ -15,24 +15,34 @@ signal speech_bubble_hidden
 signal inventory_changed
 signal hp_changed(current: int, maximum: int)
 signal died
+## 饱食度变化（0～[member satiation_max]）；全体角色随时间扣减（与是否用户操控无关）。
+signal satiation_changed(current: float, maximum: float)
 
 ## 为真时由用户输入操控（与 [NpcBehavior] 互斥）；由 [WorldSandbox] / UI 设置。
 var user_controlled: bool = false
 
 @export_group("When user_controlled")
+## 用户操控时是否用方向键移动。
 @export var player_keyboard_move: bool = true
+## 用户操控时是否左键点击地面移动。
 @export var player_click_move: bool = true
+## 用户操控时 [kbd]E[/kbd] 是否触发随机台词气泡。
 @export var player_key_interact_talk: bool = true
 ## 靠近掉落物时是否自动入包；关闭后需按 [kbd]F[/kbd]（[member player_key_pickup]）拾取。
 @export var player_auto_pickup: bool = true
+## 用户操控时 [kbd]F[/kbd] 是否用于拾取 / 容器交互（与 [member player_auto_pickup] 配合）。
 @export var player_key_pickup: bool = true
-## 轻量即时战斗：按 [kbd]J[/kbd] 普攻（仅玩家）。
+## 轻量即时战斗：按 [kbd]J[/kbd] 普攻（仅用户操控时）。
 @export var player_key_attack: bool = true
 
 @export_group("Combat (light)")
+## 生命上限；[member hp] 开局与此对齐。
 @export var combat_max_hp: int = 300
+## 单次普攻造成的伤害数值。
 @export var attack_damage: int = 25
+## 两次普攻之间的最短间隔（秒）。
 @export var attack_cooldown_sec: float = 0.42
+## 挥击窗口持续时长（秒），此间 [member AttackSwingArea] 参与命中检测。
 @export var attack_hitbox_duration_sec: float = 0.18
 ## 泰拉瑞亚式挥击：拳头与碰撞绕胸口 [member AttackSwingPivot] 旋转的总角度（度）。
 @export var attack_swing_arc_deg: float = 115.0
@@ -43,25 +53,43 @@ var user_controlled: bool = false
 ## 当前背包：每项为 [code]{ "id": String, "count": int }[/code]，[signal inventory_changed] 时更新。
 var inventory: Array[Dictionary] = []
 
-@export var move_speed: float = 120.0
+@export_group("Satiation")
+## 饱食度上限；全体角色共用同一套规则。
+@export var satiation_max: float = 100.0
+## 当前饱食度；开局在 [method _ready] 会与 [member satiation_max] 对齐。
+## 游戏**运行中**可在编辑器下方切到 [b]Remote[/b] 场景树，选中本角色后在 Inspector 里直接改（用于调试觅食等）。
+@export var satiation: float = 100.0
+## 每秒自然扣减的饱食度（全体角色；见 [method _physics_process]）。
+@export var satiation_drain_per_sec: float = 0.4
+
+## 行走与寻路时的移动速度（像素/秒）。
+@export var move_speed: float = 180
+## 行走动画帧切换快慢（越大循环越快）。
 @export var anim_speed: float = 9.0
+## 为真时在控制台打印朝向 / 帧变化（调试用）。
 @export var debug_log_sprite_changes: bool = false
 
 @export_group("Navigation stuck")
+## 是否启用「寻路卡住」检测并 [signal navigation_stuck]。
 @export var navigation_stuck_enabled: bool = true
 ## 正在沿路径移动时，全局位置连续若干秒几乎不变则视为卡住并取消寻路。
 @export var navigation_stuck_time_sec: float = 1.25
+## 判定「仍在移动」所需的最小位移（像素），低于此视为未动。
 @export var navigation_stuck_min_move_distance: float = 2.5
 
 @export_group("Appearance")
 ## 若指定则覆盖场景中 Sprite2D 的默认贴图；帧布局需与 `sprite_hframes` / `sprite_vframes` 及 `_FRAMES` 一致。
 @export var character_texture: Texture2D
+## 精灵表横向帧数（与 [member character_texture]、[member _FRAMES] 布局一致）。
 @export var sprite_hframes: int = 6
+## 精灵表纵向帧数。
 @export var sprite_vframes: int = 4
 
+## 气泡内文字打完后的停留时间（秒），再关闭气泡。
 @export var speech_duration: float = 2.5
 ## 打字机速度（字/秒）；打完后再计 `speech_duration` 才关闭气泡。
 @export var speech_chars_per_second: float = 28.0
+## 随机台词候选池（[kbd]E[/kbd] 等；可留空由 [NpcBehavior] 覆盖）。
 @export var speech_lines: Array[String] = [
 	"喵~",
 	"今天也要加油！",
@@ -91,41 +119,81 @@ const PICKUP_LAYER_BIT: int = 16
 ## 与 [code]project.godot[/code] 中 [code]combat_hurt[/code] 层一致：第 6 层（位掩码 32）。
 const HURT_LAYER_BIT: int = 32
 
+## 角色精灵；帧索引由朝向与行走驱动。
 @onready var _sprite: Sprite2D = $Sprite2D
+## [method move_to] 使用的导航代理。
 @onready var _nav_agent: NavigationAgent2D = $NavigationAgent2D
+## 头顶台词气泡根控件。
 @onready var _speech_bubble: Control = $Control
+## 气泡内文案 [Label]。
 @onready var _speech_label: Label = $Control/Label
+## 与 [GroundItem] 同物理层重叠检测，用于拾取。
 @onready var _pickup_area: Area2D = $PickupArea
+## 受击判定区（[code]combat_hurt[/code] 组）。
 @onready var _hurt_area: Area2D = $HurtArea
+## 挥击绕身旋转的轴心（贴图父节点）。
 @onready var _attack_swing_pivot: Node2D = $AttackSwingPivot
+## 挥击弧上的命中 [Area2D]。
 @onready var _attack_hitbox: Area2D = $AttackSwingPivot/AttackSwingArea
+## 游荡 / 战斗 / 觅食等 AI；用户操控时仍挂在节点上但由 [member user_controlled] 门控。
 @onready var _npc_behavior: NpcBehavior = $NpcBehavior
+## 脚下动作进度 UI 根节点（如“进食中”）。
+@onready var _action_ui: Control = $ActionUI
+## 脚下动作进度条。
+@onready var _action_bar: ProgressBar = $ActionUI/ActionProgress
+## 进度条下方状态文案。
+@onready var _action_label: Label = $ActionUI/ActionLabel
+## 动作关联道具图标（如进食时显示食物）。
+@onready var _action_icon: TextureRect = $ActionUI/ActionIcon
 
+## 当前八向朝向键（如 [code]down[/code]、[code]up_left[/code]）。
 var _facing: String = "down"
+## 行走动画用的时间累加（与 [member anim_speed] 配合）。
 var _anim_time: float = 0.0
+## 气泡「打字结束」后的剩余显示时间（秒）。
 var _speech_time_left: float = 0.0
+## 当前气泡完整文案。
 var _speech_full: String = ""
+## 打字机当前已显示的字符数（由 [member speech_chars_per_second] 与时间累加）。
 var _speech_type_progress: float = 0.0
+## 是否处于打字机播放中。
 var _speech_typing: bool = false
+## 上一帧导航是否已结束（用于边沿检测 [signal destination_reached]）。
 var _prev_nav_finished: bool = true
+## 寻路卡住：静止累计时间（秒）。
 var _nav_stuck_accum: float = 0.0
+## 寻路卡住检测用的上一采样位置。
 var _nav_stuck_last_pos: Vector2 = Vector2.ZERO
+## 上一帧是否处于沿导航移动中（卡住逻辑用）。
 var _was_following_nav: bool = false
 
+## 当前生命；[method _ready] 设为 [member combat_max_hp]，死亡后为 0。
 var hp: int = 0
+## 普攻冷却剩余（秒）。
 var _attack_cooldown_left: float = 0.0
+## 当前挥击窗口剩余（秒）；大于 0 时扫判定。
 var _attack_active_time: float = 0.0
+## 本段挥击已命中过的实例 id，防重复伤害。
 var _hit_ids_this_attack: Array[int] = []
+## 记录精灵默认缩放，用于攻击/受击 tween 还原。
 var _sprite_base_scale: Vector2 = Vector2.ONE
+## 记录精灵默认本地位置，用于受击 tween。
 var _sprite_base_pos: Vector2 = Vector2.ZERO
+## 受击闪红/位移 tween（非空时先杀再建）。
 var _hurt_fx_tween: Tween
+## 攻击缩放 tween。
 var _attack_fx_tween: Tween
+## 动作锁定剩余时长（秒）；大于 0 时角色无法移动与寻路。
+var _action_busy_left: float = 0.0
+## 当前动作锁定总时长（秒），用于驱动进度条。
+var _action_busy_total: float = 0.0
 
 
 func _ready() -> void:
 	add_to_group("npc_nekomimi")
 	add_to_group("camera_trackable")
 	hp = combat_max_hp
+	satiation = satiation_max
 	_sprite_base_scale = _sprite.scale
 	_sprite_base_pos = _sprite.position
 	if _hurt_area:
@@ -140,6 +208,9 @@ func _ready() -> void:
 		_attack_hitbox.monitoring = false
 	_speech_bubble.visible = false
 	_speech_bubble.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _action_ui:
+		_action_ui.visible = false
+		_action_ui.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_apply_character_texture_if_set()
 	if _pickup_area:
 		_pickup_area.collision_layer = 0
@@ -178,17 +249,26 @@ func _mouse_world_pos() -> Vector2:
 	return _sprite.get_global_mouse_position()
 
 
+func _is_key_press(event: InputEvent, key: Key) -> bool:
+	if not (event is InputEventKey):
+		return false
+	var ek: InputEventKey = event as InputEventKey
+	if not ek.pressed or ek.echo:
+		return false
+	return ek.keycode == key or ek.physical_keycode == key
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not user_controlled:
 		return
 	if hp <= 0:
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_J:
+	if _is_key_press(event, KEY_J):
 		if player_key_attack:
 			_try_attack()
 			get_viewport().set_input_as_handled()
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_F:
+	if _is_key_press(event, KEY_F):
 		if player_key_pickup:
 			var panel: Node = get_tree().get_first_node_in_group("container_panel")
 			if panel != null and panel.has_method("try_handle_f") and panel.try_handle_f(self):
@@ -197,7 +277,7 @@ func _unhandled_input(event: InputEvent) -> void:
 			pickup_item(0)
 			get_viewport().set_input_as_handled()
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_E:
+	if _is_key_press(event, KEY_E):
 		if player_key_interact_talk:
 			_say_random_line()
 			get_viewport().set_input_as_handled()
@@ -238,6 +318,43 @@ func talk(text: String) -> void:
 
 func move_to(pos: Vector2) -> void:
 	_nav_agent.target_position = pos
+
+
+func start_action_lock(text: String, duration_sec: float, item_id: String = "") -> void:
+	var d: float = maxf(0.0, duration_sec)
+	if d <= 0.0:
+		clear_action_lock()
+		return
+	_action_busy_total = d
+	_action_busy_left = d
+	velocity = Vector2.ZERO
+	if _nav_agent:
+		_nav_agent.target_position = global_position
+	if _action_ui:
+		_action_ui.visible = true
+	if _action_label:
+		_action_label.text = text
+	if _action_icon:
+		var tex: Texture2D = ItemDB.get_icon_texture(item_id) if not item_id.is_empty() else null
+		_action_icon.texture = tex
+		_action_icon.visible = tex != null
+	if _action_bar:
+		_action_bar.max_value = 100.0
+		_action_bar.value = 0.0
+
+
+func clear_action_lock() -> void:
+	_action_busy_left = 0.0
+	_action_busy_total = 0.0
+	if _action_ui:
+		_action_ui.visible = false
+	if _action_icon:
+		_action_icon.visible = false
+		_action_icon.texture = null
+
+
+func is_action_locked() -> bool:
+	return _action_busy_left > 0.0
 
 
 ## 将八向朝向对准世界坐标（用于 NPC 反击等，不移动）。
@@ -351,6 +468,7 @@ func take_damage(amount: int, attacker: Node) -> void:
 
 func _die() -> void:
 	died.emit()
+	clear_action_lock()
 	velocity = Vector2.ZERO
 	talk("")
 	_speech_bubble.visible = false
@@ -432,6 +550,62 @@ func add_item_to_inventory(item_id: String, amount: int) -> int:
 	return remaining
 
 
+func add_satiation(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	var prev: float = satiation
+	satiation = minf(satiation_max, satiation + amount)
+	if not is_equal_approx(satiation, prev):
+		satiation_changed.emit(satiation, satiation_max)
+
+
+## 从背包按 id 移除至多 [param count] 个（跨多格）；返回实际移除数量。
+func remove_items_from_inventory_by_id(item_id: String, count: int) -> int:
+	if count <= 0:
+		return 0
+	var total: int = 0
+	var left: int = count
+	while left > 0:
+		var si: int = ItemDB.first_slot_with_item(inventory, item_id)
+		if si < 0:
+			break
+		var removed: int = ItemDB.remove_items_from_slot(inventory, si, left)
+		if removed <= 0:
+			break
+		total += removed
+		left -= removed
+	if total > 0:
+		inventory_changed.emit()
+	return total
+
+
+## 吃掉背包里的物品并增加饱食度；返回实际吃掉个数。
+func consume_inventory_item_for_satiation(item_id: String, count: int, satiation_per_unit: float) -> int:
+	var n: int = remove_items_from_inventory_by_id(item_id, count)
+	if n > 0:
+		add_satiation(satiation_per_unit * float(n))
+	return n
+
+
+## 调试/快捷使用入口：当前仅实现食物（恢复饱食并触发动作读条）。
+func try_use_item_by_id(item_id: String) -> bool:
+	if item_id.is_empty():
+		return false
+	if hp <= 0:
+		return false
+	if is_action_locked():
+		return false
+	var sat_per: float = ItemDB.get_food_satiation(item_id, 0.0)
+	if sat_per <= 0.0:
+		return false
+	if satiation >= satiation_max:
+		return false
+	if consume_inventory_item_for_satiation(item_id, 1, sat_per) <= 0:
+		return false
+	start_action_lock("进食中", 1.05, item_id)
+	return true
+
+
 func _collect_ground_items_sorted() -> Array:
 	var out: Array = []
 	if _pickup_area == null:
@@ -506,13 +680,20 @@ func _physics_process(delta: float) -> void:
 	var was_facing := _facing
 	var was_frame := _sprite.frame
 
+	var action_locked: bool = is_action_locked()
 	var manual := false
 	var dir := Vector2.ZERO
-	if user_controlled and player_keyboard_move:
+	if not action_locked and user_controlled and player_keyboard_move:
 		dir = Input.get_vector("ui_left", "ui_right", "ui_up", "ui_down")
 		manual = dir.length_squared() > 0.0001
 
-	if manual:
+	if action_locked:
+		velocity = Vector2.ZERO
+		if _nav_agent:
+			_nav_agent.target_position = global_position
+		var seq_locked: Array = _FRAMES[_facing]
+		_sprite.frame = seq_locked[1]
+	elif manual:
 		dir = dir.normalized()
 		_nav_agent.target_position = global_position
 		velocity = dir * move_speed
@@ -550,6 +731,20 @@ func _physics_process(delta: float) -> void:
 		print("[NekomimiWalker] facing %s → %s | sprite.frame %d → %d" % [was_facing, _facing, was_frame, _sprite.frame])
 
 	_step_speech_bubble(delta)
+
+	if hp > 0 and satiation > 0.0:
+		var prev_s: float = satiation
+		satiation = maxf(0.0, satiation - satiation_drain_per_sec * delta)
+		if not is_equal_approx(satiation, prev_s):
+			satiation_changed.emit(satiation, satiation_max)
+
+	if _action_busy_left > 0.0:
+		_action_busy_left = maxf(0.0, _action_busy_left - delta)
+		if _action_bar and _action_busy_total > 0.0:
+			var ratio: float = 1.0 - (_action_busy_left / _action_busy_total)
+			_action_bar.value = clampf(ratio * 100.0, 0.0, 100.0)
+		if _action_busy_left <= 0.0:
+			clear_action_lock()
 
 	move_and_slide()
 

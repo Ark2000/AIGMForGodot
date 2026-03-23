@@ -25,17 +25,17 @@ static func _ensure() -> void:
 		"equipment_wizard_hat": _row("巫师帽", "尖尖的帽檐，好像会变聪明。", "Equipment/Wizard Hat.png", "equipment", 1),
 		"equipment_wooden_armor": _row("木甲", "用木板拼成的简易护具。", "Equipment/Wooden Armor.png", "equipment", 1),
 		# Food
-		"food_apple": _row("苹果", "脆甜的红苹果，恢复一点点心情。", "Food/Apple.png", "food", 99),
-		"food_beer": _row("麦酒", "泡沫丰富，少喝怡情。", "Food/Beer.png", "food", 99),
-		"food_bread": _row("面包", "旅行必备的主食。", "Food/Bread.png", "food", 99),
-		"food_cheese": _row("奶酪", "咸香浓郁，配面包刚好。", "Food/Cheese.png", "food", 99),
-		"food_fish_steak": _row("鱼排", "煎得恰到好处的鱼肉。", "Food/Fish Steak.png", "food", 99),
-		"food_green_apple": _row("青苹果", "略酸，但很提神。", "Food/Green Apple.png", "food", 99),
-		"food_ham": _row("火腿", "咸香厚实的一片。", "Food/Ham.png", "food", 99),
-		"food_meat": _row("肉块", "新鲜的肉，烤一烤更香。", "Food/Meat.png", "food", 99),
-		"food_mushroom": _row("蘑菇", "采自林间，煮汤不错。", "Food/Mushroom.png", "food", 99),
-		"food_wine": _row("葡萄酒", "果香与橡木桶气息。", "Food/Wine.png", "food", 99),
-		"food_wine_2": _row("陈酿", "颜色更深，口感更醇。", "Food/Wine 2.png", "food", 99),
+		"food_apple": _row("苹果", "脆甜的红苹果，恢复一点点心情。", "Food/Apple.png", "food", 99, 14.0),
+		"food_beer": _row("麦酒", "泡沫丰富，少喝怡情。", "Food/Beer.png", "food", 99, 10.0),
+		"food_bread": _row("面包", "旅行必备的主食。", "Food/Bread.png", "food", 99, 38.0),
+		"food_cheese": _row("奶酪", "咸香浓郁，配面包刚好。", "Food/Cheese.png", "food", 99, 24.0),
+		"food_fish_steak": _row("鱼排", "煎得恰到好处的鱼肉。", "Food/Fish Steak.png", "food", 99, 40.0),
+		"food_green_apple": _row("青苹果", "略酸，但很提神。", "Food/Green Apple.png", "food", 99, 12.0),
+		"food_ham": _row("火腿", "咸香厚实的一片。", "Food/Ham.png", "food", 99, 34.0),
+		"food_meat": _row("肉块", "新鲜的肉，烤一烤更香。", "Food/Meat.png", "food", 99, 30.0),
+		"food_mushroom": _row("蘑菇", "采自林间，煮汤不错。", "Food/Mushroom.png", "food", 99, 9.0),
+		"food_wine": _row("葡萄酒", "果香与橡木桶气息。", "Food/Wine.png", "food", 99, 16.0),
+		"food_wine_2": _row("陈酿", "颜色更深，口感更醇。", "Food/Wine 2.png", "food", 99, 20.0),
 		# Material
 		"material_fabric": _row("布料", "柔软的织物，可做衣物。", "Material/Fabric.png", "material", 99),
 		"material_leather": _row("皮革", "鞣制过的皮料。", "Material/Leather.png", "material", 99),
@@ -175,14 +175,40 @@ static func remove_items_from_slot(slots: Array, slot_index: int, amount: int) -
 	return take
 
 
-static func _row(display_name: String, description: String, rel_path: String, category: String, max_stack: int) -> Dictionary:
+## 查找第一个堆叠了 [param item_id] 的格子下标；没有则返回 [code]-1[/code]。
+static func first_slot_with_item(slots: Array, item_id: String) -> int:
+	for i in range(slots.size()):
+		var slot: Dictionary = slots[i]
+		if str(slot.get("id", "")) == item_id and int(slot.get("count", 0)) > 0:
+			return i
+	return -1
+
+
+static func _row(display_name: String, description: String, rel_path: String, category: String, max_stack: int, food_satiation: float = 0.0) -> Dictionary:
 	return {
 		"name": display_name,
 		"description": description,
 		"icon": "%s/%s" % [BASE, rel_path],
 		"category": category,
 		"max_stack": max_stack,
+		"food_satiation": food_satiation,
 	}
+
+
+static func get_food_satiation(item_id: String, fallback: float = 0.0) -> float:
+	var d: Dictionary = get_def(item_id)
+	if d.is_empty():
+		return fallback
+	return float(d.get("food_satiation", fallback))
+
+
+static func is_food(item_id: String) -> bool:
+	var d: Dictionary = get_def(item_id)
+	if d.is_empty():
+		return false
+	if str(d.get("category", "")) != "food":
+		return false
+	return get_food_satiation(item_id, 0.0) > 0.0
 
 
 static func get_def(item_id: String) -> Dictionary:

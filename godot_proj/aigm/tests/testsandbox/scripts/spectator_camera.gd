@@ -56,7 +56,7 @@ func _on_trackable_died(_who: NekomimiWalker) -> void:
 			_pan_offset = Vector2.ZERO
 			_pick_fallback_after_death()
 	if is_inside_tree():
-		get_tree().call_group("camera_mode_menu", "refresh_from_camera")
+		get_tree().call_group("debug_panel", "refresh_from_camera")
 
 
 func _pick_fallback_after_death() -> void:
@@ -185,7 +185,7 @@ func _physics_process(delta: float) -> void:
 		if alive.is_empty():
 			mode = Mode.FREE
 			if is_inside_tree():
-				get_tree().call_group("camera_mode_menu", "refresh_from_camera")
+				get_tree().call_group("debug_panel", "refresh_from_camera")
 			return
 		_auto_timer += delta
 		if _auto_timer >= auto_cycle_interval_sec:

@@ -22,6 +22,7 @@ var _player_nearby_count: int = 0
 
 
 func _ready() -> void:
+	add_to_group("ground_item")
 	collision_layer = PICKUP_LAYER_BIT
 	collision_mask = 0
 	monitorable = true
