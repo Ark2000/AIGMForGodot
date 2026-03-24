@@ -32,6 +32,8 @@ var user_controlled: bool = false
 @export var player_auto_pickup: bool = true
 ## 用户操控时 [kbd]F[/kbd] 是否用于拾取 / 容器交互（与 [member player_auto_pickup] 配合）。
 @export var player_key_pickup: bool = true
+## 用户操控时 [kbd]Q[/kbd] 是否打开背包面板。
+@export var player_key_inventory: bool = true
 ## 轻量即时战斗：按 [kbd]J[/kbd] 普攻（仅用户操控时）。
 @export var player_key_attack: bool = true
 
@@ -118,6 +120,7 @@ const _WALK_LOCAL_PINGPONG: Array[int] = [0, 1, 2, 1]
 const PICKUP_LAYER_BIT: int = 16
 ## 与 [code]project.godot[/code] 中 [code]combat_hurt[/code] 层一致：第 6 层（位掩码 32）。
 const HURT_LAYER_BIT: int = 32
+const MONEY_ITEM_ID: String = "misc_copper_coin"
 
 ## 角色精灵；帧索引由朝向与行走驱动。
 @onready var _sprite: Sprite2D = $Sprite2D
@@ -258,6 +261,67 @@ func _is_key_press(event: InputEvent, key: Key) -> bool:
 	return ek.keycode == key or ek.physical_keycode == key
 
 
+func _collect_f_interact_targets() -> Array[Dictionary]:
+	var out: Array[Dictionary] = []
+	for n in get_tree().get_nodes_in_group("shop_point"):
+		if not (n is Node2D):
+			continue
+		var s: Node2D = n as Node2D
+		if not s.has_method("can_interact") or not bool(s.call("can_interact", self)):
+			continue
+		var label: String = str(s.call("get_interact_label")) if s.has_method("get_interact_label") else str(s.get("display_name"))
+		out.append({
+			"type": "shop",
+			"node": s,
+			"label": ("商店 · %s" % label) if not label.is_empty() else "商店",
+			"d2": global_position.distance_squared_to(s.global_position),
+		})
+	for n in get_tree().get_nodes_in_group("item_container"):
+		if not (n is Node2D):
+			continue
+		var c: Node2D = n as Node2D
+		if not c.has_method("can_interact") or not bool(c.call("can_interact", self)):
+			continue
+		var label: String = str(c.call("get_interact_label")) if c.has_method("get_interact_label") else str(c.get("display_name"))
+		out.append({
+			"type": "container",
+			"node": c,
+			"label": ("容器 · %s" % label) if not label.is_empty() else "容器",
+			"d2": global_position.distance_squared_to(c.global_position),
+		})
+	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		return float(a.get("d2", INF)) < float(b.get("d2", INF))
+	)
+	return out
+
+
+func _try_open_target(target: Dictionary) -> bool:
+	var t: String = str(target.get("type", ""))
+	var node: Node = target.get("node", null) as Node
+	if node == null:
+		return false
+	if t == "shop":
+		var shop_panel: Node = get_tree().get_first_node_in_group("shop_panel")
+		return shop_panel != null and shop_panel.has_method("open_for_target") and bool(shop_panel.call("open_for_target", self, node))
+	if t == "container":
+		var panel: Node = get_tree().get_first_node_in_group("container_panel")
+		return panel != null and panel.has_method("open_for_target") and bool(panel.call("open_for_target", self, node))
+	return false
+
+
+func _try_handle_f_interaction() -> bool:
+	var targets: Array[Dictionary] = _collect_f_interact_targets()
+	if targets.is_empty():
+		return false
+	if targets.size() == 1:
+		return _try_open_target(targets[0])
+	var picker: Node = get_tree().get_first_node_in_group("interact_picker_panel")
+	if picker != null and picker.has_method("open_for_walker"):
+		picker.call("open_for_walker", self, targets)
+		return true
+	return _try_open_target(targets[0])
+
+
 func _unhandled_input(event: InputEvent) -> void:
 	if not user_controlled:
 		return
@@ -270,8 +334,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _is_key_press(event, KEY_F):
 		if player_key_pickup:
-			var panel: Node = get_tree().get_first_node_in_group("container_panel")
-			if panel != null and panel.has_method("try_handle_f") and panel.try_handle_f(self):
+			if _try_handle_f_interaction():
 				get_viewport().set_input_as_handled()
 				return
 			pickup_item(0)
@@ -281,6 +344,13 @@ func _unhandled_input(event: InputEvent) -> void:
 		if player_key_interact_talk:
 			_say_random_line()
 			get_viewport().set_input_as_handled()
+		return
+	if _is_key_press(event, KEY_Q):
+		if player_key_inventory:
+			var inv_panel: Node = get_tree().get_first_node_in_group("inventory_panel")
+			if inv_panel != null and inv_panel.has_method("toggle_for_walker"):
+				inv_panel.call("toggle_for_walker", self)
+				get_viewport().set_input_as_handled()
 		return
 	if (
 		event is InputEventMouseButton
@@ -548,6 +618,35 @@ func add_item_to_inventory(item_id: String, amount: int) -> int:
 	if remaining < amount:
 		inventory_changed.emit()
 	return remaining
+
+
+func get_money() -> int:
+	var total: int = 0
+	for slot in inventory:
+		if not (slot is Dictionary):
+			continue
+		if str((slot as Dictionary).get("id", "")) != MONEY_ITEM_ID:
+			continue
+		total += maxi(0, int((slot as Dictionary).get("count", 0)))
+	return total
+
+
+func spend_money(amount: int) -> bool:
+	var need: int = maxi(0, amount)
+	if need <= 0:
+		return true
+	if get_money() < need:
+		return false
+	var removed: int = remove_items_from_inventory_by_id(MONEY_ITEM_ID, need)
+	return removed >= need
+
+
+func earn_money(amount: int) -> int:
+	var a: int = maxi(0, amount)
+	if a <= 0:
+		return 0
+	var left: int = add_item_to_inventory(MONEY_ITEM_ID, a)
+	return a - left
 
 
 func add_satiation(amount: float) -> void:

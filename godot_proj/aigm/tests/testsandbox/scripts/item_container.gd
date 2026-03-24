@@ -6,6 +6,7 @@ extends Node2D
 ## [code]amount == -1[/code] 表示该格**全部**可转移数量（整格）。
 
 signal storage_changed
+signal interaction_state_changed
 
 @export var display_name: String = "木箱"
 @export var inventory_max_slots: int = 18
@@ -23,12 +24,14 @@ var storage: Array[Dictionary] = []
 
 var _interact_area: Area2D
 var _near_controlled_count: int = 0
+var _session_owner: NekomimiWalker
 
 @onready var _hint: Label = $HintLabel
 
 
 func _ready() -> void:
 	add_to_group("item_container")
+	add_to_group("interactable_facility")
 	_interact_area = $InteractArea
 	var sh: CollisionShape2D = $InteractArea/CollisionShape2D
 	if sh != null and sh.shape is CircleShape2D:
@@ -64,6 +67,49 @@ func _refresh_sprite() -> void:
 
 func notify_storage_changed() -> void:
 	storage_changed.emit()
+
+
+func get_interact_label() -> String:
+	return "容器 · %s" % display_name if not display_name.is_empty() else "容器"
+
+
+func get_current_user() -> NekomimiWalker:
+	if _session_owner == null or not is_instance_valid(_session_owner):
+		return null
+	return _session_owner
+
+
+func is_busy() -> bool:
+	return get_current_user() != null
+
+
+func can_interact(walker: NekomimiWalker) -> bool:
+	if walker == null:
+		return false
+	if not is_walker_in_range(walker):
+		return false
+	var session_user: NekomimiWalker = get_current_user()
+	return session_user == null or session_user == walker
+
+
+func try_acquire(walker: NekomimiWalker) -> bool:
+	if not can_interact(walker):
+		return false
+	if get_current_user() == walker:
+		return true
+	_session_owner = walker
+	interaction_state_changed.emit()
+	return true
+
+
+func release(walker: NekomimiWalker) -> void:
+	var session_user: NekomimiWalker = get_current_user()
+	if session_user == null:
+		return
+	if walker != null and session_user != walker:
+		return
+	_session_owner = null
+	interaction_state_changed.emit()
 
 
 ## 从 [param walker] 背包第 [param slot_index] 格向本容器转移物品。[param amount] 为 [code]-1[/code] 时转移该格剩余全部。

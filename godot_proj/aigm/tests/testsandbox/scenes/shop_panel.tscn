@@ -1,0 +1,105 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/testsandbox/scripts/shop_panel.gd" id="1_script"]
+
+[node name="ShopPanel" type="CanvasLayer"]
+layer = 26
+script = ExtResource("1_script")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PanelRoot" type="Panel" parent="CenterContainer"]
+custom_minimum_size = Vector2(640, 420)
+
+[node name="Margin" type="MarginContainer" parent="CenterContainer/PanelRoot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+theme_override_constants/margin_bottom = 10
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/PanelRoot/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "商店"
+
+[node name="MoneyLabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+horizontal_alignment = 1
+text = "铜币: 0"
+
+[node name="HBox" type="HBoxContainer" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/separation = 10
+
+[node name="ShopVBox" type="VBoxContainer" parent="CenterContainer/PanelRoot/Margin/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="SLabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/ShopVBox"]
+layout_mode = 2
+text = "商店（无限）"
+
+[node name="ShopList" type="ItemList" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/ShopVBox"]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MidButtons" type="VBoxContainer" parent="CenterContainer/PanelRoot/Margin/VBox/HBox"]
+layout_mode = 2
+theme_override_constants/separation = 6
+alignment = 1
+
+[node name="BuyOneButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/MidButtons"]
+layout_mode = 2
+text = "购买 ×1"
+
+[node name="BuyTenButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/MidButtons"]
+layout_mode = 2
+text = "购买 ×10"
+
+[node name="SellOneButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/MidButtons"]
+layout_mode = 2
+text = "出售 ×1"
+
+[node name="SellAllButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/MidButtons"]
+layout_mode = 2
+text = "出售全部"
+
+[node name="PlayerVBox" type="VBoxContainer" parent="CenterContainer/PanelRoot/Margin/VBox/HBox"]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="PLabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/PlayerVBox"]
+layout_mode = 2
+text = "背包"
+
+[node name="PlayerList" type="ItemList" parent="CenterContainer/PanelRoot/Margin/VBox/HBox/PlayerVBox"]
+custom_minimum_size = Vector2(250, 250)
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="HintLabel" type="Label" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 12
+text = "F 或 Esc 关闭。商店库存无限，买入受余额与背包限制。"
+autowrap_mode = 2
+
+[node name="CloseButton" type="Button" parent="CenterContainer/PanelRoot/Margin/VBox"]
+layout_mode = 2
+text = "关闭"

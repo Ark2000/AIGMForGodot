@@ -15,9 +15,9 @@ const _CTX_USE := 1
 var _cam: Camera2D
 var _syncing: bool = false
 ## 为真时切换镜头跟随目标会自动把操控权交给该角色（与 [WorldSandbox] 协调）。
-var _control_follows_camera: bool = false
+var _control_follows_camera: bool = true
 var _walker: CharacterBody2D
-var _expanded: bool = false
+var _expanded: bool = true
 var _height_expanded: float = 0.0
 ## 与刷道具下拉选项顺序一致的 [ItemDB] id 列表。
 var _spawn_item_ids: Array[String] = []
@@ -29,6 +29,7 @@ var _ctx_item_index: int = -1
 @onready var _toggle: Button = $Panel/Margin/VBox/ToggleButton
 @onready var _fold: Control = $Panel/Margin/VBox/FoldContent
 @onready var _item_list: ItemList = $Panel/Margin/VBox/FoldContent/ItemList
+@onready var _inv_label: Label = $Panel/Margin/VBox/FoldContent/InvLabel
 @onready var _hint: Label = $Panel/Margin/VBox/FoldContent/HintLabel
 @onready var _spawn_opt: OptionButton = $Panel/Margin/VBox/FoldContent/SpawnItemOption
 @onready var _item_ctx_menu: PopupMenu = $ItemContextMenu
@@ -42,14 +43,17 @@ func _ready() -> void:
 	var cb: CheckBox = $Panel/Margin/VBox/FoldContent/ControlUserCheck
 	cb.toggled.connect(_on_control_toggled)
 	_toggle.pressed.connect(_on_toggle_pressed)
-	_item_list.gui_input.connect(_on_item_list_gui_input)
-	_item_ctx_menu.id_pressed.connect(_on_item_ctx_id_pressed)
-	_item_ctx_menu.add_theme_font_size_override("font_size", 16)
-	_item_list.fixed_icon_size = Vector2i(18, 18)
-	_item_list.icon_mode = ItemList.ICON_MODE_LEFT
+	# 背包查看已迁移到独立 InventoryPanel（Q 打开），DebugPanel 不再承载背包 UI。
+	if _inv_label:
+		_inv_label.visible = false
+	if _item_list:
+		_item_list.visible = false
+		_item_list.custom_minimum_size = Vector2.ZERO
+	if _item_ctx_menu:
+		_item_ctx_menu.visible = false
 	_apply_small_option_popup_font(opt)
 	_apply_small_option_popup_font(_spawn_opt)
-	_hint.text = "右键背包道具可使用 | F 拾取 / 箱子 | 1 刷物"
+	_hint.text = "F 交互设施 | Q 背包 | 1 刷物"
 	_fill_spawn_items()
 	_update_toggle_label()
 	call_deferred("_rebuild_items")
@@ -123,8 +127,12 @@ func _fill_spawn_items() -> void:
 func _defer_bind_layout() -> void:
 	await get_tree().process_frame
 	_height_expanded = maxf(_panel.size.y, 200.0)
+	# 默认启用：展开面板 + 操控当前跟镜角色。
+	_control_follows_camera = true
+	_sync_control_checkbox()
 	_apply_fold_layout()
 	rebind_to_controlled()
+	call_deferred("_apply_control_to_current_tracked")
 
 
 func refresh_from_camera() -> void:
@@ -307,6 +315,10 @@ func _update_toggle_label() -> void:
 
 
 func _on_inventory_changed() -> void:
+	if _item_list == null:
+		return
+	if not _item_list.visible:
+		return
 	_item_list.clear()
 	_inventory_item_ids.clear()
 	if _walker == null:

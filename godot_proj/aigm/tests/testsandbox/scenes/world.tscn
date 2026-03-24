@@ -9,6 +9,10 @@
 [ext_resource type="Script" uid="uid://w3hdhiwbnbva" path="res://tests/testsandbox/scripts/spectator_camera.gd" id="8_scam"]
 [ext_resource type="PackedScene" uid="uid://b8k3m2c7n1qwx" path="res://tests/testsandbox/scenes/item_container.tscn" id="11_ictr"]
 [ext_resource type="PackedScene" uid="uid://dak4m3d8n2rxy" path="res://tests/testsandbox/scenes/container_panel.tscn" id="12_cpnl"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/shop_point.tscn" id="13_shop"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/shop_panel.tscn" id="14_shoppanel"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/interact_picker_panel.tscn" id="15_picker"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/inventory_panel.tscn" id="16_invpanel"]
 
 [node name="World" type="Node2D" unique_id=550588223]
 texture_filter = 6
@@ -61,6 +65,11 @@ preview_item_id = "misc_chest"
 preset_item_id = "misc_copper_coin"
 preset_quantity = 30
 
+[node name="GeneralStore" parent="YSort" unique_id=981233005 instance=ExtResource("13_shop")]
+position = Vector2(33, 358)
+display_name = "杂货商店"
+preview_item_id = "misc_golden_coin"
+
 [node name="SpectatorCamera" type="Camera2D" parent="." unique_id=738148233]
 position_smoothing_enabled = true
 rotation_smoothing_enabled = true
@@ -69,3 +78,9 @@ script = ExtResource("8_scam")
 [node name="DebugPanel" parent="." unique_id=1065770395 instance=ExtResource("6_dbg")]
 
 [node name="ContainerPanel" parent="." unique_id=1337420001 instance=ExtResource("12_cpnl")]
+
+[node name="ShopPanel" parent="." unique_id=1411200900 instance=ExtResource("14_shoppanel")]
+
+[node name="InteractPickerPanel" parent="." unique_id=1700100900 instance=ExtResource("15_picker")]
+
+[node name="InventoryPanel" parent="." unique_id=1710100900 instance=ExtResource("16_invpanel")]

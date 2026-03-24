@@ -31,6 +31,10 @@ enum AiState {
 @export var forage_rescan_interval_sec: float = 0.45
 ## NPC 吃掉食物时的动作时长（秒）；期间移动/寻路被锁定并显示脚下进度条。
 @export var forage_eat_duration_sec: float = 1.05
+## NPC 设施交互每一步的延迟（秒），用于“像人一样操作 UI”。
+@export var facility_action_step_delay_sec: float = 0.45
+## 单次设施交互会话最多执行多少步（取物/购买次数）。
+@export var facility_actions_per_session: int = 3
 
 @export_group("Forage speech (empty = skip)")
 @export var speech_enter_forage: Array[String] = ["肚子饿了喵…", "想吃点面包…", "去找点吃的。"]
@@ -140,6 +144,8 @@ var _forage_container_target: Node2D = null
 var _forage_next_explore_at: float = 0.0
 ## 觅食：下次全图扫描食物/容器的时刻。
 var _forage_next_scan_at: float = 0.0
+## 觅食：是否正在执行设施会话（箱子/商店），避免并发重复触发。
+var _forage_session_busy: bool = false
 
 const _DEFAULT_HURT_LINES: PackedStringArray = ["呜…好痛！", "别打啦喵！", "好过分！", "好疼…"]
 
@@ -174,6 +180,7 @@ func resume_after_control() -> void:
 	_ai_state = AiState.WANDER
 	_threat = null
 	_last_damage_time_sec = -1.0
+	_abort_interaction_sessions()
 	if random_speech_enabled:
 		set_process(true)
 		_reset_timer()
@@ -370,6 +377,7 @@ func _enter_wander(_reason: String = "") -> void:
 	_last_damage_time_sec = -1.0
 	_wander_block_until = 0.0
 	_clear_forage_targets()
+	_abort_interaction_sessions()
 	if wander_enabled:
 		call_deferred("_pick_and_go")
 
@@ -414,6 +422,7 @@ func notify_hurt(attacker: Node) -> void:
 			w.talk(pool.pick_random())
 	if not _walker_is_npc():
 		return
+	_abort_interaction_sessions()
 	if not combat_ai_enabled:
 		return
 	var max_hp: int = maxi(1, w.combat_max_hp)
@@ -444,6 +453,7 @@ func _clear_forage_targets() -> void:
 func _enter_forage_state() -> void:
 	_ai_state = AiState.FORAGE
 	_clear_forage_targets()
+	_forage_session_busy = false
 	_forage_next_explore_at = _now_sec()
 	_forage_next_scan_at = 0.0
 	_say_from_pool(speech_enter_forage)
@@ -452,16 +462,15 @@ func _enter_forage_state() -> void:
 func _tick_forage(w: NekomimiWalker) -> void:
 	if w.is_action_locked():
 		return
+	if _forage_session_busy:
+		return
 	var exit_at: float = w.satiation_max * forage_exit_above_ratio
 	if w.satiation >= exit_at:
 		_enter_wander("forage_sated")
 		return
-	var consumed_id: String = _consume_any_food_from_inventory(w)
-	if not consumed_id.is_empty():
-		w.start_action_lock("进食中", forage_eat_duration_sec, consumed_id)
+	if _has_food_in_inventory(w):
+		_start_inventory_food_session(w)
 		_clear_forage_targets()
-		if w.satiation >= exit_at:
-			_enter_wander("forage_ate_inv")
 		return
 	if _forage_ground_target != null and not is_instance_valid(_forage_ground_target):
 		_forage_ground_target = null
@@ -473,7 +482,7 @@ func _tick_forage(w: NekomimiWalker) -> void:
 	if _forage_container_target != null:
 		w.move_to(_forage_container_target.global_position)
 		if _forage_container_target.has_method("is_walker_in_range") and bool(_forage_container_target.call("is_walker_in_range", w)):
-			_try_withdraw_food_from_container(w, _forage_container_target)
+			_start_forage_container_session(w, _forage_container_target)
 			_forage_container_target = null
 		return
 	if _now_sec() < _forage_next_scan_at:
@@ -483,6 +492,7 @@ func _tick_forage(w: NekomimiWalker) -> void:
 	_forage_next_scan_at = _now_sec() + maxf(0.08, forage_rescan_interval_sec)
 	var gi2: GroundItem = _find_nearest_ground_food(w)
 	var cn2: Node2D = _find_nearest_container_with_food(w)
+	var sp2: Node2D = _find_nearest_shop_point(w)
 	if gi2 != null and cn2 != null:
 		var dg2: float = w.global_position.distance_squared_to(gi2.global_position)
 		var dc2: float = w.global_position.distance_squared_to(cn2.global_position)
@@ -500,6 +510,13 @@ func _tick_forage(w: NekomimiWalker) -> void:
 	if cn2 != null:
 		_forage_container_target = cn2
 		w.move_to(cn2.global_position)
+		return
+	if sp2 != null and w.get_money() > 0:
+		_forage_container_target = null
+		_forage_ground_target = null
+		w.move_to(sp2.global_position)
+		if sp2.has_method("is_walker_in_range") and bool(sp2.call("is_walker_in_range", w)):
+			_start_forage_shop_session(w, sp2)
 		return
 	if _now_sec() >= _forage_next_explore_at:
 		_pick_forage_explore(w)
@@ -521,6 +538,127 @@ func _try_withdraw_food_from_container(w: NekomimiWalker, c: Node) -> void:
 		var sat_per: float = ItemDB.get_food_satiation(picked_id, forage_default_food_restore)
 		w.consume_inventory_item_for_satiation(picked_id, got, sat_per)
 		w.start_action_lock("进食中", forage_eat_duration_sec, picked_id)
+
+
+func _start_forage_container_session(w: NekomimiWalker, c: Node) -> void:
+	if _forage_session_busy:
+		return
+	if not c.has_method("try_acquire") or not bool(c.call("try_acquire", w)):
+		return
+	_forage_session_busy = true
+	var panel: Node = get_tree().get_first_node_in_group("container_panel")
+	if panel != null and panel.has_method("open_session"):
+		panel.call("open_session", w, c, "%s(NPC)" % w.name)
+	var steps: int = maxi(1, facility_actions_per_session)
+	for _i in range(steps):
+		if not _walker_is_npc() or _ai_state != AiState.FORAGE:
+			break
+		if not c.has_method("is_walker_in_range") or not bool(c.call("is_walker_in_range", w)):
+			break
+		var before_s: float = w.satiation
+		_try_withdraw_food_from_container(w, c)
+		if w.satiation > before_s:
+			await get_tree().create_timer(maxf(0.05, facility_action_step_delay_sec)).timeout
+		else:
+			break
+		if w.satiation >= w.satiation_max * forage_exit_above_ratio:
+			break
+	if panel != null and panel.has_method("close_if_actor"):
+		panel.call("close_if_actor", w)
+	if c.has_method("release"):
+		c.call("release", w)
+	_forage_session_busy = false
+
+
+func _find_nearest_shop_point(w: NekomimiWalker) -> Node2D:
+	var best: Node2D = null
+	var best_d2: float = INF
+	var r2: float = forage_max_search_radius * forage_max_search_radius
+	var p: Vector2 = w.global_position
+	for n in get_tree().get_nodes_in_group("shop_point"):
+		if not is_instance_valid(n) or not (n is Node2D):
+			continue
+		var sp: Node2D = n as Node2D
+		if sp.has_method("can_interact") and not bool(sp.call("can_interact", w)):
+			continue
+		var d2: float = p.distance_squared_to(sp.global_position)
+		if d2 <= r2 and d2 < best_d2:
+			best = sp
+			best_d2 = d2
+	return best
+
+
+func _pick_shop_food_id(shop: Node) -> String:
+	if shop == null or not shop.has_method("get_sell_item_ids"):
+		return ""
+	var best_id: String = ""
+	var best_score: float = -INF
+	var ids: Array = shop.call("get_sell_item_ids")
+	for idv in ids:
+		var id: String = str(idv)
+		var sat: float = ItemDB.get_food_satiation(id, 0.0)
+		if sat <= 0.0:
+			continue
+		var price: int = int(shop.call("get_buy_price", id)) if shop.has_method("get_buy_price") else ItemDB.get_price(id, 0)
+		if price <= 0:
+			continue
+		var score: float = sat / float(price)
+		if score > best_score:
+			best_score = score
+			best_id = id
+	return best_id
+
+
+func _start_forage_shop_session(w: NekomimiWalker, shop: Node) -> void:
+	if _forage_session_busy:
+		return
+	if not shop.has_method("try_acquire") or not bool(shop.call("try_acquire", w)):
+		return
+	_forage_session_busy = true
+	var panel: Node = get_tree().get_first_node_in_group("shop_panel")
+	if panel != null and panel.has_method("open_session"):
+		panel.call("open_session", w, shop, "%s(NPC)" % w.name)
+	var item_id: String = _pick_shop_food_id(shop)
+	var steps: int = maxi(1, facility_actions_per_session)
+	for _i in range(steps):
+		if item_id.is_empty():
+			break
+		if not _walker_is_npc() or _ai_state != AiState.FORAGE:
+			break
+		if w.get_money() <= 0:
+			break
+		if not shop.has_method("buy_to_walker"):
+			break
+		var got: int = int(shop.call("buy_to_walker", w, item_id, 1))
+		if got <= 0:
+			break
+		var sat_per: float = ItemDB.get_food_satiation(item_id, forage_default_food_restore)
+		w.consume_inventory_item_for_satiation(item_id, got, sat_per)
+		w.start_action_lock("进食中", forage_eat_duration_sec, item_id)
+		await get_tree().create_timer(maxf(0.05, facility_action_step_delay_sec)).timeout
+		if w.satiation >= w.satiation_max * forage_exit_above_ratio:
+			break
+	if panel != null and panel.has_method("close_if_actor"):
+		panel.call("close_if_actor", w)
+	if shop.has_method("release"):
+		shop.call("release", w)
+	_forage_session_busy = false
+
+
+func _abort_interaction_sessions() -> void:
+	var w: NekomimiWalker = get_parent() as NekomimiWalker
+	if w == null:
+		return
+	var cpanel: Node = get_tree().get_first_node_in_group("container_panel")
+	if cpanel != null and cpanel.has_method("close_if_actor"):
+		cpanel.call("close_if_actor", w)
+	var spanel: Node = get_tree().get_first_node_in_group("shop_panel")
+	if spanel != null and spanel.has_method("close_if_actor"):
+		spanel.call("close_if_actor", w)
+	var inv_panel: Node = get_tree().get_first_node_in_group("inventory_panel")
+	if inv_panel != null and inv_panel.has_method("close_if_actor"):
+		inv_panel.call("close_if_actor", w)
+	_forage_session_busy = false
 
 
 func _find_nearest_ground_food(w: NekomimiWalker) -> GroundItem:
@@ -561,23 +699,44 @@ func _find_nearest_container_with_food(w: NekomimiWalker) -> Node2D:
 	return best
 
 
-func _consume_any_food_from_inventory(w: NekomimiWalker) -> String:
-	var best_id: String = ""
-	var best_sat: float = 0.0
+func _has_food_in_inventory(w: NekomimiWalker) -> bool:
 	for slot in w.inventory:
 		if not (slot is Dictionary):
 			continue
 		var sid: String = str((slot as Dictionary).get("id", ""))
-		var sat: float = ItemDB.get_food_satiation(sid, 0.0)
-		if sat <= 0.0:
-			continue
-		if sat > best_sat:
-			best_sat = sat
-			best_id = sid
-	if best_id.is_empty():
-		return ""
-	var sat_per: float = ItemDB.get_food_satiation(best_id, forage_default_food_restore)
-	return best_id if w.consume_inventory_item_for_satiation(best_id, 1, sat_per) > 0 else ""
+		if ItemDB.get_food_satiation(sid, 0.0) > 0.0:
+			return true
+	return false
+
+
+func _start_inventory_food_session(w: NekomimiWalker) -> void:
+	if _forage_session_busy:
+		return
+	var panel: Node = get_tree().get_first_node_in_group("inventory_panel")
+	if panel == null or not panel.has_method("open_session"):
+		return
+	_forage_session_busy = true
+	panel.call("open_session", w, "%s(NPC)" % w.name)
+	var steps: int = maxi(1, facility_actions_per_session)
+	for _i in range(steps):
+		if not _walker_is_npc() or _ai_state != AiState.FORAGE:
+			break
+		if w.satiation >= w.satiation_max * forage_exit_above_ratio:
+			break
+		if not panel.has_method("pick_best_food_item_id"):
+			break
+		var item_id: String = str(panel.call("pick_best_food_item_id", w))
+		if item_id.is_empty():
+			break
+		var ok: bool = false
+		if panel.has_method("npc_use_item_by_id"):
+			ok = bool(panel.call("npc_use_item_by_id", w, item_id))
+		if not ok:
+			break
+		await get_tree().create_timer(maxf(0.05, facility_action_step_delay_sec)).timeout
+	if panel.has_method("close_if_actor"):
+		panel.call("close_if_actor", w)
+	_forage_session_busy = false
 
 
 func _first_food_slot(slots: Array) -> int:
@@ -605,7 +764,7 @@ func _pick_forage_explore(w: NekomimiWalker) -> void:
 		cy = w.global_position.y
 	var hx: float = wander_half_extents.x
 	var hy: float = wander_half_extents.y
-	var step: float = mini(hx, hy) * 0.45
+	var step: float = minf(hx, hy) * 0.45
 	var x: float = clampf(w.global_position.x + randf_range(-step, step), cx - hx, cx + hx)
 	var y: float = clampf(w.global_position.y + randf_range(-step, step), cy - hy, cy + hy)
 	w.move_to(Vector2(x, y))

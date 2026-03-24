@@ -20,6 +20,17 @@
 
 **容器**：在场景里实例化 `scenes/item_container.tscn`，靠近后按 **F** 打开 `ContainerPanel` 存取物品（与地面拾取共用 F：优先打开容器）。开局多组物品在 Inspector 里填 `initial_stacks`（`ItemStackPreset` 数组）；仍保留单项 `preset_item_id` / `preset_quantity` 作兼容（仅当 `initial_stacks` 为空时生效）。
 
+**交易点**：在场景里实例化 `scenes/shop_point.tscn`，角色靠近后按 **F** 打开 `ShopPanel`。左侧是商店无限库存，右侧是角色背包；支持购买/出售。货币默认用 `misc_copper_coin`（铜币）计价。  
+脚本侧（供 NPC/AI 使用）可直接调用 `shop_point.gd` 的 `buy_to_walker(walker, item_id, count)` / `sell_from_walker(walker, slot_index, amount)`，无需 UI。
+
+**统一交互会话**：按 **F** 时会先收集附近可交互设施（如商店、容器）。若只有 1 个目标则直接交互；若有多个目标会弹出 `InteractPickerPanel` 供玩家选择。
+
+**独占交互**：容器与商店都实现 `try_acquire/release` 会话锁，单个设施同一时刻只允许 1 名角色交互。若被占用，其它角色不会进入该设施会话。
+
+**NPC 与玩家一致流程**：NPC 访问设施时也会打开同一套面板（共享 UI），并以分步延时执行操作，面板会实时刷新，不再“瞬时完成后立刻离开”。
+
+**背包面板**：用户可按 **Q** 打开 `InventoryPanel`，并在面板中使用道具。NPC 在觅食时也会打开同一面板，再按步骤延时使用背包食物，整个过程会实时更新 UI。
+
 工程主场景在 `project.godot` 里设为 `res://tests/testsandbox/scenes/world.tscn`（与 `world.tscn` 内 UID 一致）。在编辑器里保存主场景后，Godot 也可改回 `uid://…` 形式。
 
 ## TODO（下一步：抽象设施 + Utility AI）

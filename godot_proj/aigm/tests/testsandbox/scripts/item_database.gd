@@ -51,11 +51,11 @@ static func _ensure() -> void:
 		"misc_book_3": _row("精装书", "封面考究，像收藏品。", "Misc/Book 3.png", "misc", 99),
 		"misc_candle": _row("蜡烛", "微弱但温暖的光。", "Misc/Candle.png", "misc", 99),
 		"misc_chest": _row("宝箱", "里面也许有好东西。", "Misc/Chest.png", "misc", 1),
-		"misc_copper_coin": _row("铜币", "最常见的零钱。", "Misc/Copper Coin.png", "misc", 999),
+		"misc_copper_coin": _row("铜币", "最常见的零钱。", "Misc/Copper Coin.png", "misc", 999, 0.0, 1),
 		"misc_crate": _row("木箱", "堆叠货物用。", "Misc/Crate.png", "misc", 99),
 		"misc_envolop": _row("信封", "装着信件或秘密。", "Misc/Envolop.png", "misc", 99),
 		"misc_gear": _row("齿轮", "机械零件。", "Misc/Gear.png", "misc", 99),
-		"misc_golden_coin": _row("金币", "闪亮的大额货币。", "Misc/Golden Coin.png", "misc", 999),
+		"misc_golden_coin": _row("金币", "闪亮的大额货币。", "Misc/Golden Coin.png", "misc", 999, 0.0, 64),
 		"misc_golden_key": _row("金钥匙", "能打开重要的门。", "Misc/Golden Key.png", "misc", 99),
 		"misc_heart": _row("心形物", "象征生命或好感。", "Misc/Heart.png", "misc", 99),
 		"misc_iron_key": _row("铁钥匙", "普通的门锁都能试试。", "Misc/Iron Key.png", "misc", 99),
@@ -63,7 +63,7 @@ static func _ensure() -> void:
 		"misc_map": _row("地图", "标记了路线与地点。", "Misc/Map.png", "misc", 1),
 		"misc_rune_stone": _row("符文石", "刻着神秘符号。", "Misc/Rune Stone.png", "misc", 99),
 		"misc_scroll": _row("卷轴", "可能记载法术或任务。", "Misc/Scroll.png", "misc", 99),
-		"misc_silver_coin": _row("银币", "比铜币值钱一点。", "Misc/Silver Coin.png", "misc", 999),
+		"misc_silver_coin": _row("银币", "比铜币值钱一点。", "Misc/Silver Coin.png", "misc", 999, 0.0, 8),
 		"misc_silver_key": _row("银钥匙", "精致且少见。", "Misc/Silver Key.png", "misc", 99),
 		# Monster Part
 		"monster_bone": _row("骨头", "来自某只魔物的残骸。", "Monster Part/Bone.png", "monster_part", 99),
@@ -184,7 +184,7 @@ static func first_slot_with_item(slots: Array, item_id: String) -> int:
 	return -1
 
 
-static func _row(display_name: String, description: String, rel_path: String, category: String, max_stack: int, food_satiation: float = 0.0) -> Dictionary:
+static func _row(display_name: String, description: String, rel_path: String, category: String, max_stack: int, food_satiation: float = 0.0, price: int = 1) -> Dictionary:
 	return {
 		"name": display_name,
 		"description": description,
@@ -192,6 +192,7 @@ static func _row(display_name: String, description: String, rel_path: String, ca
 		"category": category,
 		"max_stack": max_stack,
 		"food_satiation": food_satiation,
+		"price": maxi(0, price),
 	}
 
 
@@ -209,6 +210,13 @@ static func is_food(item_id: String) -> bool:
 	if str(d.get("category", "")) != "food":
 		return false
 	return get_food_satiation(item_id, 0.0) > 0.0
+
+
+static func get_price(item_id: String, fallback: int = 0) -> int:
+	var d: Dictionary = get_def(item_id)
+	if d.is_empty():
+		return maxi(0, fallback)
+	return maxi(0, int(d.get("price", fallback)))
 
 
 static func get_def(item_id: String) -> Dictionary:
