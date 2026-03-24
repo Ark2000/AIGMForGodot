@@ -289,6 +289,21 @@ func _collect_f_interact_targets() -> Array[Dictionary]:
 			"label": ("容器 · %s" % label) if not label.is_empty() else "容器",
 			"d2": global_position.distance_squared_to(c.global_position),
 		})
+	for gi in _collect_ground_items_sorted():
+		if not (gi is GroundItem):
+			continue
+		var g: GroundItem = gi as GroundItem
+		var def: Dictionary = ItemDB.get_def(g.item_id)
+		var disp: String = str(def.get("name", g.item_id)) if not def.is_empty() else g.item_id
+		var glbl: String = "拾取 · %s" % disp
+		if g.quantity > 1:
+			glbl += " × %d" % g.quantity
+		out.append({
+			"type": "ground_item",
+			"node": g,
+			"label": glbl,
+			"d2": global_position.distance_squared_to(g.global_position),
+		})
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a.get("d2", INF)) < float(b.get("d2", INF))
 	)
@@ -311,6 +326,11 @@ func _try_open_target(target: Dictionary) -> bool:
 		return node is Node2D and host.has_method("open_shop_for_target") and bool(host.call("open_shop_for_target", self, node))
 	if t == "container":
 		return node is Node2D and host.has_method("open_container_for_target") and bool(host.call("open_container_for_target", self, node))
+	if t == "ground_item":
+		if node is GroundItem:
+			pickup_ground_item(node as GroundItem)
+			return true
+		return false
 	return false
 
 
@@ -614,7 +634,12 @@ func pickup_item(index: int) -> void:
 		return
 	var gi: GroundItem = grounds[index] as GroundItem
 	if gi != null:
-		_try_pickup_ground(gi)
+		pickup_ground_item(gi)
+
+
+## 拾取指定地面掉落（交互列表等调用，避免只按索引 [method pickup_item] 取最近一个）。
+func pickup_ground_item(gi: GroundItem) -> void:
+	_try_pickup_ground(gi)
 
 
 ## 将物品加入背包，返回未能入包的数量（背包满或无效 id 时大于 0）。

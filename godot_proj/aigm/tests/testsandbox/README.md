@@ -23,7 +23,7 @@
 **交易点**：在场景里实例化 `scenes/shop_point.tscn`，角色靠近后按 **F** 打开 `ShopPanel`。左侧是商店无限库存，右侧是角色背包；支持购买/出售。货币默认用 `misc_copper_coin`（铜币）计价。  
 脚本侧（供 NPC/AI 使用）可直接调用 `shop_point.gd` 的 `buy_to_walker(walker, item_id, count)` / `sell_from_walker(walker, slot_index, amount)`，无需 UI。
 
-**统一交互会话**：按 **F** 时会先收集附近可交互设施（如商店、容器）。若只有 1 个目标则直接交互；若有多个目标会弹出 `InteractPickerPanel` 供玩家选择。
+**统一交互会话**：按 **F** 时会收集**拾取范围内**的目标：商店、容器、以及 `PickupArea` 重叠的地面掉落物。若只有 1 个目标则直接执行（开箱/交易/拾取该掉落）；若有多个目标会弹出 `InteractPickerPanel` 供选择（含叠在一起的多个 `GroundItem`）。
 
 **独占交互**：容器与商店都实现 `try_acquire/release` 会话锁，单个设施同一时刻只允许 1 名角色交互。若被占用，其它角色不会进入该设施会话。
 
