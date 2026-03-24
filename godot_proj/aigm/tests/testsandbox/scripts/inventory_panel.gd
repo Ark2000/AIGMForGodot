@@ -13,6 +13,7 @@ var _walker: NekomimiWalker
 var _session_actor_label: String = ""
 var _item_ids: Array[String] = []
 var _follow_head_offset: Vector2 = Vector2(0.0, -92.0)
+var _closing: bool = false
 
 
 func _ready() -> void:
@@ -37,10 +38,14 @@ func _unhandled_input(event: InputEvent) -> void:
 		get_viewport().set_input_as_handled()
 
 
+func is_open_for_walker(walker: NekomimiWalker) -> bool:
+	return visible and _walker == walker
+
+
 func toggle_for_walker(walker: NekomimiWalker) -> void:
 	if walker == null:
 		return
-	if visible and _walker == walker:
+	if is_open_for_walker(walker):
 		close()
 		return
 	open_for_walker(walker)
@@ -70,6 +75,9 @@ func open_session(walker: NekomimiWalker, actor_label: String = "") -> bool:
 
 
 func close() -> void:
+	if _closing or is_queued_for_deletion():
+		return
+	_closing = true
 	visible = false
 	if _walker != null and is_instance_valid(_walker) and _walker.inventory_changed.is_connected(_on_inventory_changed):
 		_walker.inventory_changed.disconnect(_on_inventory_changed)
@@ -77,6 +85,7 @@ func close() -> void:
 	_session_actor_label = ""
 	_item_ids.clear()
 	set_process(false)
+	queue_free()
 
 
 func close_if_actor(walker: NekomimiWalker) -> void:

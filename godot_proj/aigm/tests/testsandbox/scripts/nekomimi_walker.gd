@@ -295,17 +295,22 @@ func _collect_f_interact_targets() -> Array[Dictionary]:
 	return out
 
 
+func _interaction_ui_host() -> Node:
+	return get_tree().get_first_node_in_group("interaction_ui_host")
+
+
 func _try_open_target(target: Dictionary) -> bool:
 	var t: String = str(target.get("type", ""))
 	var node: Node = target.get("node", null) as Node
 	if node == null:
 		return false
+	var host: Node = _interaction_ui_host()
+	if host == null:
+		return false
 	if t == "shop":
-		var shop_panel: Node = get_tree().get_first_node_in_group("shop_panel")
-		return shop_panel != null and shop_panel.has_method("open_for_target") and bool(shop_panel.call("open_for_target", self, node))
+		return node is Node2D and host.has_method("open_shop_for_target") and bool(host.call("open_shop_for_target", self, node))
 	if t == "container":
-		var panel: Node = get_tree().get_first_node_in_group("container_panel")
-		return panel != null and panel.has_method("open_for_target") and bool(panel.call("open_for_target", self, node))
+		return node is Node2D and host.has_method("open_container_for_target") and bool(host.call("open_container_for_target", self, node))
 	return false
 
 
@@ -315,9 +320,9 @@ func _try_handle_f_interaction() -> bool:
 		return false
 	if targets.size() == 1:
 		return _try_open_target(targets[0])
-	var picker: Node = get_tree().get_first_node_in_group("interact_picker_panel")
-	if picker != null and picker.has_method("open_for_walker"):
-		picker.call("open_for_walker", self, targets)
+	var host: Node = _interaction_ui_host()
+	if host != null and host.has_method("open_interact_picker"):
+		host.call("open_interact_picker", self, targets)
 		return true
 	return _try_open_target(targets[0])
 
@@ -347,9 +352,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if _is_key_press(event, KEY_Q):
 		if player_key_inventory:
-			var inv_panel: Node = get_tree().get_first_node_in_group("inventory_panel")
-			if inv_panel != null and inv_panel.has_method("toggle_for_walker"):
-				inv_panel.call("toggle_for_walker", self)
+			var host: Node = _interaction_ui_host()
+			if host != null and host.has_method("toggle_inventory_for_walker"):
+				host.call("toggle_inventory_for_walker", self)
 				get_viewport().set_input_as_handled()
 		return
 	if (

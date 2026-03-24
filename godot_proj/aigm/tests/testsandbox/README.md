@@ -16,7 +16,7 @@
 | `scripts/` | 脚本（`.gd`），与场景分离便于浏览 |
 | `assets/` | 贴图、TileSet、物品图标等资源 |
 
-**调试面板**：`scenes/debug_panel.tscn` 挂在 `world.tscn` 左上，折叠标题为「调试面板」；内含摄像机跟随、是否操控跟镜角色、跟镜角色属性、背包列表；下拉选择 `ItemDB` 道具后按 **1** 在**鼠标位置**生成地面掉落（数量见面板导出 `spawn_quantity_min` / `max`）。原「右键随机刷物」已移除。
+**调试面板**：`scenes/debug_panel.tscn` 挂在 `world.tscn` 左上，折叠标题为「调试面板」；内含摄像机跟随、是否操控跟镜角色、跟镜角色属性；下拉选择 `ItemDB` 道具后按 **1** 在**鼠标位置**生成地面掉落（数量见面板导出 `spawn_quantity_min` / `max`）。原「右键随机刷物」已移除。
 
 **容器**：在场景里实例化 `scenes/item_container.tscn`，靠近后按 **F** 打开 `ContainerPanel` 存取物品（与地面拾取共用 F：优先打开容器）。开局多组物品在 Inspector 里填 `initial_stacks`（`ItemStackPreset` 数组）；仍保留单项 `preset_item_id` / `preset_quantity` 作兼容（仅当 `initial_stacks` 为空时生效）。
 
@@ -27,9 +27,11 @@
 
 **独占交互**：容器与商店都实现 `try_acquire/release` 会话锁，单个设施同一时刻只允许 1 名角色交互。若被占用，其它角色不会进入该设施会话。
 
-**NPC 与玩家一致流程**：NPC 访问设施时也会打开同一套面板（共享 UI），并以分步延时执行操作，面板会实时刷新，不再“瞬时完成后立刻离开”。
+**交互 UI 宿主**：`world.tscn` 中的 `InteractionUIHost`（`scripts/interaction_ui_host.gd`）**按需实例化** `scenes/container_panel.tscn`、`shop_panel.tscn`、`inventory_panel.tscn`、`interact_picker_panel.tscn`；多名角色可同时各自持有一套面板，关闭时 `queue_free()`，避免旧版「全局单例抢同一个 CanvasLayer」的问题。
 
-**背包面板**：用户可按 **Q** 打开 `InventoryPanel`，并在面板中使用道具。NPC 在觅食时也会打开同一面板，再按步骤延时使用背包食物，整个过程会实时更新 UI。
+**NPC 与玩家一致流程**：NPC 访问设施时也会打开同一套面板**类型**，并以分步延时执行操作，各自实例会实时刷新，不再“瞬时完成后立刻离开”。
+
+**背包面板**：用户可按 **Q** 打开背包 UI（由宿主新建实例），并在面板中使用道具。NPC 在觅食时也会各自打开实例，再按步骤延时使用背包食物。
 
 工程主场景在 `project.godot` 里设为 `res://tests/testsandbox/scenes/world.tscn`（与 `world.tscn` 内 UID 一致）。在编辑器里保存主场景后，Godot 也可改回 `uid://…` 形式。
 

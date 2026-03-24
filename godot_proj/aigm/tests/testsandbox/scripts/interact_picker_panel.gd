@@ -11,6 +11,7 @@ extends CanvasLayer
 var _walker: NekomimiWalker
 var _targets: Array[Dictionary] = []
 var _follow_head_offset: Vector2 = Vector2(0.0, -92.0)
+var _closing: bool = false
 
 
 func _ready() -> void:
@@ -49,11 +50,23 @@ func open_for_walker(walker: NekomimiWalker, targets: Array[Dictionary]) -> void
 		_hint.text = "没有可交互目标"
 
 
+func close_if_actor(walker: NekomimiWalker) -> void:
+	if not visible:
+		return
+	if _walker != walker:
+		return
+	close()
+
+
 func close() -> void:
+	if _closing or is_queued_for_deletion():
+		return
+	_closing = true
 	visible = false
 	_targets.clear()
 	_walker = null
 	set_process(false)
+	queue_free()
 
 
 func _on_item_activated(_index: int) -> void:
@@ -75,14 +88,16 @@ func _activate_selected() -> void:
 	if node == null:
 		_hint.text = "目标已失效"
 		return
+	var host: Node = get_tree().get_first_node_in_group("interaction_ui_host")
+	if host == null:
+		_hint.text = "交互 UI 未就绪"
+		return
 	var ok: bool = false
 	var t: String = str(target.get("type", ""))
 	if t == "shop":
-		var panel: Node = get_tree().get_first_node_in_group("shop_panel")
-		ok = panel != null and panel.has_method("open_for_target") and bool(panel.call("open_for_target", _walker, node))
+		ok = host.has_method("open_shop_for_target") and bool(host.call("open_shop_for_target", _walker, node))
 	elif t == "container":
-		var cpanel: Node = get_tree().get_first_node_in_group("container_panel")
-		ok = cpanel != null and cpanel.has_method("open_for_target") and bool(cpanel.call("open_for_target", _walker, node))
+		ok = host.has_method("open_container_for_target") and bool(host.call("open_container_for_target", _walker, node))
 	if ok:
 		close()
 	else:

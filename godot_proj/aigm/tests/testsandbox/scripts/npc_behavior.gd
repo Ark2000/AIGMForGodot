@@ -546,9 +546,15 @@ func _start_forage_container_session(w: NekomimiWalker, c: Node) -> void:
 	if not c.has_method("try_acquire") or not bool(c.call("try_acquire", w)):
 		return
 	_forage_session_busy = true
-	var panel: Node = get_tree().get_first_node_in_group("container_panel")
-	if panel != null and panel.has_method("open_session"):
-		panel.call("open_session", w, c, "%s(NPC)" % w.name)
+	var host: Node = get_tree().get_first_node_in_group("interaction_ui_host")
+	var panel: Node = null
+	if host != null and host.has_method("spawn_container_session"):
+		panel = host.call("spawn_container_session", w, c as Node2D, "%s(NPC)" % w.name)
+	if panel == null:
+		if c.has_method("release"):
+			c.call("release", w)
+		_forage_session_busy = false
+		return
 	var steps: int = maxi(1, facility_actions_per_session)
 	for _i in range(steps):
 		if not _walker_is_npc() or _ai_state != AiState.FORAGE:
@@ -615,9 +621,15 @@ func _start_forage_shop_session(w: NekomimiWalker, shop: Node) -> void:
 	if not shop.has_method("try_acquire") or not bool(shop.call("try_acquire", w)):
 		return
 	_forage_session_busy = true
-	var panel: Node = get_tree().get_first_node_in_group("shop_panel")
-	if panel != null and panel.has_method("open_session"):
-		panel.call("open_session", w, shop, "%s(NPC)" % w.name)
+	var host2: Node = get_tree().get_first_node_in_group("interaction_ui_host")
+	var panel: Node = null
+	if host2 != null and host2.has_method("spawn_shop_session"):
+		panel = host2.call("spawn_shop_session", w, shop as Node2D, "%s(NPC)" % w.name)
+	if panel == null:
+		if shop.has_method("release"):
+			shop.call("release", w)
+		_forage_session_busy = false
+		return
 	var item_id: String = _pick_shop_food_id(shop)
 	var steps: int = maxi(1, facility_actions_per_session)
 	for _i in range(steps):
@@ -649,15 +661,9 @@ func _abort_interaction_sessions() -> void:
 	var w: NekomimiWalker = get_parent() as NekomimiWalker
 	if w == null:
 		return
-	var cpanel: Node = get_tree().get_first_node_in_group("container_panel")
-	if cpanel != null and cpanel.has_method("close_if_actor"):
-		cpanel.call("close_if_actor", w)
-	var spanel: Node = get_tree().get_first_node_in_group("shop_panel")
-	if spanel != null and spanel.has_method("close_if_actor"):
-		spanel.call("close_if_actor", w)
-	var inv_panel: Node = get_tree().get_first_node_in_group("inventory_panel")
-	if inv_panel != null and inv_panel.has_method("close_if_actor"):
-		inv_panel.call("close_if_actor", w)
+	var host3: Node = get_tree().get_first_node_in_group("interaction_ui_host")
+	if host3 != null and host3.has_method("close_all_panels_for_walker"):
+		host3.call("close_all_panels_for_walker", w)
 	_forage_session_busy = false
 
 
@@ -712,11 +718,13 @@ func _has_food_in_inventory(w: NekomimiWalker) -> bool:
 func _start_inventory_food_session(w: NekomimiWalker) -> void:
 	if _forage_session_busy:
 		return
-	var panel: Node = get_tree().get_first_node_in_group("inventory_panel")
-	if panel == null or not panel.has_method("open_session"):
+	var host4: Node = get_tree().get_first_node_in_group("interaction_ui_host")
+	if host4 == null or not host4.has_method("spawn_inventory_session"):
+		return
+	var panel: Node = host4.call("spawn_inventory_session", w, "%s(NPC)" % w.name)
+	if panel == null:
 		return
 	_forage_session_busy = true
-	panel.call("open_session", w, "%s(NPC)" % w.name)
 	var steps: int = maxi(1, facility_actions_per_session)
 	for _i in range(steps):
 		if not _walker_is_npc() or _ai_state != AiState.FORAGE:

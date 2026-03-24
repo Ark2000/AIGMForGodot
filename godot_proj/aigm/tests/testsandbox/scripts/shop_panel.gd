@@ -19,6 +19,7 @@ var _shop: Node2D
 var _shop_item_ids: Array[String] = []
 var _session_actor_label: String = ""
 var _follow_head_offset: Vector2 = Vector2(0.0, -92.0)
+var _closing: bool = false
 
 
 func _ready() -> void:
@@ -128,6 +129,9 @@ func open(walker: NekomimiWalker, shop: Node2D) -> bool:
 
 
 func close() -> void:
+	if _closing or is_queued_for_deletion():
+		return
+	_closing = true
 	visible = false
 	if _walker != null and is_instance_valid(_walker) and _walker.inventory_changed.is_connected(_on_inventory_changed):
 		_walker.inventory_changed.disconnect(_on_inventory_changed)
@@ -142,6 +146,11 @@ func close() -> void:
 	_shop_item_ids.clear()
 	_session_actor_label = ""
 	set_process(false)
+	queue_free()
+
+
+func matches_facility_session(walker: NekomimiWalker, facility: Node2D) -> bool:
+	return visible and _walker == walker and _shop == facility
 
 
 func close_if_actor(walker: NekomimiWalker) -> void:
