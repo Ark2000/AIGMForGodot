@@ -1,0 +1,6 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# 本地密钥，勿提交（用 config.example.json 复制为 config.json）
+tests/llm_talk_cursor/config.json

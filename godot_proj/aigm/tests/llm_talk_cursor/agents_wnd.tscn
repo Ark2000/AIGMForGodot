@@ -1,0 +1,75 @@
+[gd_scene format=3 uid="uid://c0h88p5ls0iqn"]
+
+[ext_resource type="Script" uid="uid://t3aat7wsyukv" path="res://tests/llm_talk_cursor/agents_wnd.gd" id="1_l42ho"]
+
+[node name="AgentsWnd" type="CanvasLayer" unique_id=3517936]
+layer = 99
+script = ExtResource("1_l42ho")
+
+[node name="Bg" type="Panel" parent="." unique_id=781737810]
+modulate = Color(0.4472173, 0.01256777, 0.18707988, 1)
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="." unique_id=96371055]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 1
+
+[node name="TopBar" type="HBoxContainer" parent="VBoxContainer" unique_id=754822381]
+layout_mode = 2
+
+[node name="Title" type="Button" parent="VBoxContainer/TopBar" unique_id=2080219019]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Agents (4 Active)"
+
+[node name="Add" type="Button" parent="VBoxContainer/TopBar" unique_id=892386128]
+layout_mode = 2
+text = "  +  "
+
+[node name="Close" type="Button" parent="VBoxContainer/TopBar" unique_id=1834923860]
+layout_mode = 2
+text = "  x  "
+
+[node name="Contents" type="TabContainer" parent="VBoxContainer" unique_id=546377723]
+layout_mode = 2
+size_flags_vertical = 3
+current_tab = 0
+drag_to_rearrange_enabled = true
+
+[node name="RichTextLabel" type="RichTextLabel" parent="VBoxContainer/Contents" unique_id=778135960]
+layout_mode = 2
+metadata/_tab_index = 0
+
+[node name="RichTextLabel2" type="RichTextLabel" parent="VBoxContainer/Contents" unique_id=675336905]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 1
+
+[node name="RichTextLabel3" type="RichTextLabel" parent="VBoxContainer/Contents" unique_id=1078554779]
+visible = false
+layout_mode = 2
+metadata/_tab_index = 2
+
+[node name="InputArea" type="HBoxContainer" parent="VBoxContainer" unique_id=1179254099]
+layout_mode = 2
+
+[node name="LineEdit" type="LineEdit" parent="VBoxContainer/InputArea" unique_id=671384795]
+layout_mode = 2
+size_flags_horizontal = 3
+placeholder_text = "Input something here..."
+
+[node name="Send" type="Button" parent="VBoxContainer/InputArea" unique_id=2028285124]
+layout_mode = 2
+text = " Enter "
