@@ -6,6 +6,7 @@
 
 - **默认不按「NPC / 玩家」区分机制**：同一套数值与规则适用于所有 `NekomimiWalker`，除非在文档或代码里**单独说明**。
 - **饱食度**：全体角色随时间自然下降，与是否由用户操控无关。
+- **精力**：`NekomimiWalker.energy` 随时间略降，睡床可恢复；过低时 `NpcBehavior` 在启用了 `drives_enabled` 时会偏向去找 `bed_point`。
 - **输入与 AI 分工**：`user_controlled` 只决定键盘/鼠标等输入与 `NpcBehavior` 是否驱动该实例；觅食、游荡等属于「AI 脚本在启用时的行为」，与饱食度等**全局数值**不是两套规则。
 
 ## 布局
@@ -23,7 +24,13 @@
 **交易点**：在场景里实例化 `scenes/shop_point.tscn`，角色靠近后按 **F** 打开 `ShopPanel`。左侧是商店无限库存，右侧是角色背包；支持购买/出售。货币默认用 `misc_copper_coin`（铜币）计价。  
 脚本侧（供 NPC/AI 使用）可直接调用 `shop_point.gd` 的 `buy_to_walker(walker, item_id, count)` / `sell_from_walker(walker, slot_index, amount)`，无需 UI。
 
-**统一交互会话**：按 **F** 时会收集**拾取范围内**的目标：商店、容器、以及 `PickupArea` 重叠的地面掉落物。若只有 1 个目标则直接执行（开箱/交易/拾取该掉落）；若有多个目标会弹出 `InteractPickerPanel` 供选择（含叠在一起的多个 `GroundItem`）。
+**可插拔交互契约**（`group interactable_facility`）：新增设施**不必改** `nekomimi_walker.gd`。设施脚本实现 `build_f_interact_entry(walker) -> Dictionary`（含 `node` / `label` / `d2`）与 `open_player_interaction(host, walker) -> bool`；`NekomimiWalker` 只枚举该组并排序，`InteractionUIHost.open_facility_for_walker` 转调设施的 `open_player_interaction`。商店、容器、地面掉落、**床**、**打工点**均已接入。
+
+**统一交互会话**：按 **F** 收集上述设施条目（与 `GroundItem` 一致通过组枚举）。只有 1 个目标则直接执行；多个目标弹出 `InteractPickerPanel`。
+
+**床**：`scenes/bed_point.tscn`，独占会话 + 睡眠进度，结束加精力。
+
+**打工点**：`scenes/work_point.tscn`，独占会话 + 打工进度，结束发 `misc_copper_coin`。`NpcBehavior` 在 `drives_enabled` 下用效用分在「觅食 / 睡觉 / 打工」间选择：**仅在**饿、且没有伸手可用的免费食物、附近商店有食物可买、但**钱不够**时，「挣钱」分才会高，从而去打工（非写死「必须打工」）。
 
 **独占交互**：容器与商店都实现 `try_acquire/release` 会话锁，单个设施同一时刻只允许 1 名角色交互。若被占用，其它角色不会进入该设施会话。
 
@@ -37,8 +44,10 @@
 
 ## TODO（下一步：抽象设施 + Utility AI）
 
-- [ ] **引入 Utility AI 决策层**：以 `Need / Goal / Action` 打分选行动，替代硬编码状态分支（保留少量硬规则做兜底）。
-- [ ] **设施抽象统一接口**：新增通用 `InteractableFacility` 数据/组件，不让 NPC 识别“床/工作台”具体名词，只读取属性标签与效果。
+- [x] **觅食侧效用驱动雏形**：`NpcBehavior.drives_enabled` 在游荡时对「觅食 / 睡觉 / 挣钱」打分（权重可调）；关闭 `drives_enabled` 时仍沿用原先「仅饱食度进觅食」规则。
+- [x] **设施不按名硬编码进 Walker**：`interactable_facility` + `open_facility_for_walker`。
+- [ ] **完整 Utility AI**：更多需求维度、行动队列、标签化设施与数据驱动配表。
+- [ ] **设施抽象统一接口**：通用 `InteractableFacility` 资源/组件，NPC 只读标签与数值，而非脚本类名。
 - [ ] **设施属性标签（可组合）**：例如 `rest`, `work`, `social`, `trade`, `service`；每个设施可同时拥有多个标签与不同效率。
 - [ ] **交互契约标准化**：统一字段如 `duration_sec`、`cost_money`、`reward_money`、`satiation_delta`、`energy_delta`、`social_delta`、`cooldown_sec`、`capacity`。
 - [ ] **工作-消费闭环**：NPC 可去 `work` 点换钱，再去 `trade/service` 点消费（买食物、买服务），形成基础经济循环。

@@ -1,0 +1,28 @@
+{
+  "id": "clinic",
+  "name": "诊所",
+  "category": "medical",
+  "tags": ["medical", "healing", "full_restore", "disease_cure", "expensive"],
+  "services": [
+    {
+      "type": "full_treatment",
+      "needs": ["healing", "disease_cure", "full_recovery"],
+      "duration_sec": 120,
+      "effects": [
+        { "stat": "health", "operation": "restore_pct", "value": 1.0 },
+        { "stat": "disease", "operation": "set", "value": 0 },
+        { "stat": "poison", "operation": "set", "value": 0 },
+        { "stat": "energy", "operation": "add", "value": 10 }
+      ],
+      "cost": { "money": 80 },
+      "constraints": {
+        "max_concurrent_users": 3,
+        "can_interrupt": false
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 95,
+    "sprite": "clinic.png"
+  }
+}

@@ -1,0 +1,30 @@
+{
+  "id": "vending_machine",
+  "name": "自动售货机",
+  "category": "food",
+  "tags": ["food", "drink", "24h", "convenience", "quick"],
+  "services": [
+    {
+      "type": "buy_snack",
+      "needs": ["hunger", "thirst"],
+      "duration_sec": 5,
+      "effects": [
+        { "stat": "satiation", "operation": "add", "value": 15 },
+        { "stat": "hydration", "operation": "add", "value": 10 }
+      ],
+      "cost": { "money": 8 },
+      "constraints": {
+        "max_concurrent_users": 1,
+        "can_interrupt": false
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 50,
+    "sprite": "vending_machine.png"
+  },
+  "inventory": [
+    { "item_id": "snack_bar", "price": 8, "stock": 20 },
+    { "item_id": "soda", "price": 5, "stock": 15 }
+  ]
+}

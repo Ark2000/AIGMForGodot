@@ -1,0 +1,38 @@
+{
+  "version": "0.1.0",
+  "description": "分布式设施交互系统 - 24个样本设施配置",
+  "total_facilities": 24,
+  "categories": {
+    "rest": {
+      "description": "恢复精力、缓解疲劳",
+      "facilities": ["basic_bed", "premium_bed", "hammock", "hotspring", "meditation_cushion"]
+    },
+    "food": {
+      "description": "满足饥饿和口渴",
+      "facilities": ["vending_machine", "street_food_stall", "restaurant", "water_fountain", "picnic_area"]
+    },
+    "work": {
+      "description": "获取金钱",
+      "facilities": ["manual_labor", "delivery_point", "coding_station", "mining_rig"]
+    },
+    "training": {
+      "description": "提升属性和技能",
+      "facilities": ["gym", "library", "shooting_range", "training_dummy"]
+    },
+    "medical": {
+      "description": "治疗伤势、恢复健康",
+      "facilities": ["first_aid_station", "clinic", "herb_garden"]
+    },
+    "social": {
+      "description": "社交互动、娱乐",
+      "facilities": ["park_bench", "tavern", "stage"]
+    }
+  },
+  "design_principles": {
+    "cost_variation": "从免费(冥想垫)到昂贵(诊所80元)",
+    "duration_range": "3秒(喝水)到180秒(挖矿)",
+    "concurrency": "单人到20人不等",
+    "skill_requirements": "部分设施需要最低属性",
+    "risk_reward": "舞台表演有失败风险但收益高，搬砖稳定但收益低"
+  }
+}

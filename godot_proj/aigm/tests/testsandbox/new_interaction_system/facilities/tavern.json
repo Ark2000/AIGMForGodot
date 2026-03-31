@@ -1,0 +1,31 @@
+{
+  "id": "tavern",
+  "name": "酒馆",
+  "category": "social",
+  "tags": ["social", "food", "drink", "entertainment", "gossip", "night_life"],
+  "services": [
+    {
+      "type": "social_drinking",
+      "needs": ["social", "relaxation", "entertainment"],
+      "duration_sec": 80,
+      "effects": [
+        { "stat": "social_satisfaction", "operation": "add", "value": 30 },
+        { "stat": "mood", "operation": "add", "value": 25 },
+        { "stat": "satiation", "operation": "add", "value": 20 },
+        { "stat": "hydration", "operation": "add", "value": 15 },
+        { "stat": "stress", "operation": "add", "value": -20 },
+        { "stat": "energy", "operation": "add", "value": -5 }
+      ],
+      "cost": { "money": 35 },
+      "constraints": {
+        "max_concurrent_users": 12,
+        "can_interrupt": true,
+        "operating_hours": { "open": 16, "close": 4 }
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 120,
+    "sprite": "tavern.png"
+  }
+}

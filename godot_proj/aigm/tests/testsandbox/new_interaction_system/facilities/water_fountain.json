@@ -1,0 +1,25 @@
+{
+  "id": "water_fountain",
+  "name": "公共饮水机",
+  "category": "food",
+  "tags": ["drink", "free", "public", "quick", "hydration"],
+  "services": [
+    {
+      "type": "drink_water",
+      "needs": ["thirst", "hydration"],
+      "duration_sec": 3,
+      "effects": [
+        { "stat": "hydration", "operation": "add", "value": 20 }
+      ],
+      "cost": { "money": 0 },
+      "constraints": {
+        "max_concurrent_users": 2,
+        "can_interrupt": true
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 45,
+    "sprite": "water_fountain.png"
+  }
+}

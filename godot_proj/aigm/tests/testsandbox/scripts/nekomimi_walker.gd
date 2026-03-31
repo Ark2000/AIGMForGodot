@@ -17,6 +17,7 @@ signal hp_changed(current: int, maximum: int)
 signal died
 ## 饱食度变化（0～[member satiation_max]）；全体角色随时间扣减（与是否用户操控无关）。
 signal satiation_changed(current: float, maximum: float)
+signal energy_changed(current: float, maximum: float)
 
 ## 为真时由用户输入操控（与 [NpcBehavior] 互斥）；由 [WorldSandbox] / UI 设置。
 var user_controlled: bool = false
@@ -63,6 +64,11 @@ var inventory: Array[Dictionary] = []
 @export var satiation: float = 100.0
 ## 每秒自然扣减的饱食度（全体角色；见 [method _physics_process]）。
 @export var satiation_drain_per_sec: float = 0.4
+
+@export_group("Energy (rest / beds)")
+@export var energy_max: float = 100.0
+@export var energy: float = 100.0
+@export var energy_drain_per_sec: float = 0.22
 
 ## 行走与寻路时的移动速度（像素/秒）。
 @export var move_speed: float = 180
@@ -197,6 +203,7 @@ func _ready() -> void:
 	add_to_group("camera_trackable")
 	hp = combat_max_hp
 	satiation = satiation_max
+	energy = energy_max
 	_sprite_base_scale = _sprite.scale
 	_sprite_base_pos = _sprite.position
 	if _hurt_area:
@@ -263,47 +270,22 @@ func _is_key_press(event: InputEvent, key: Key) -> bool:
 
 func _collect_f_interact_targets() -> Array[Dictionary]:
 	var out: Array[Dictionary] = []
-	for n in get_tree().get_nodes_in_group("shop_point"):
-		if not (n is Node2D):
+	for n in get_tree().get_nodes_in_group("interactable_facility"):
+		if not is_instance_valid(n):
 			continue
-		var s: Node2D = n as Node2D
-		if not s.has_method("can_interact") or not bool(s.call("can_interact", self)):
+		if not n.has_method("build_f_interact_entry"):
 			continue
-		var label: String = str(s.call("get_interact_label")) if s.has_method("get_interact_label") else str(s.get("display_name"))
-		out.append({
-			"type": "shop",
-			"node": s,
-			"label": ("商店 · %s" % label) if not label.is_empty() else "商店",
-			"d2": global_position.distance_squared_to(s.global_position),
-		})
-	for n in get_tree().get_nodes_in_group("item_container"):
-		if not (n is Node2D):
+		var entry: Variant = n.call("build_f_interact_entry", self)
+		if not (entry is Dictionary):
 			continue
-		var c: Node2D = n as Node2D
-		if not c.has_method("can_interact") or not bool(c.call("can_interact", self)):
+		var d: Dictionary = entry as Dictionary
+		if d.is_empty():
 			continue
-		var label: String = str(c.call("get_interact_label")) if c.has_method("get_interact_label") else str(c.get("display_name"))
-		out.append({
-			"type": "container",
-			"node": c,
-			"label": ("容器 · %s" % label) if not label.is_empty() else "容器",
-			"d2": global_position.distance_squared_to(c.global_position),
-		})
-	for gi in _collect_ground_items_sorted():
-		if not (gi is GroundItem):
+		if not (d.get("node", null) is Node):
 			continue
-		var g: GroundItem = gi as GroundItem
-		var def: Dictionary = ItemDB.get_def(g.item_id)
-		var disp: String = str(def.get("name", g.item_id)) if not def.is_empty() else g.item_id
-		var glbl: String = "拾取 · %s" % disp
-		if g.quantity > 1:
-			glbl += " × %d" % g.quantity
-		out.append({
-			"type": "ground_item",
-			"node": g,
-			"label": glbl,
-			"d2": global_position.distance_squared_to(g.global_position),
-		})
+		if str(d.get("label", "")).is_empty():
+			continue
+		out.append(d)
 	out.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		return float(a.get("d2", INF)) < float(b.get("d2", INF))
 	)
@@ -315,22 +297,17 @@ func _interaction_ui_host() -> Node:
 
 
 func _try_open_target(target: Dictionary) -> bool:
-	var t: String = str(target.get("type", ""))
 	var node: Node = target.get("node", null) as Node
 	if node == null:
 		return false
+	if node is GroundItem:
+		pickup_ground_item(node as GroundItem)
+		return true
 	var host: Node = _interaction_ui_host()
 	if host == null:
 		return false
-	if t == "shop":
-		return node is Node2D and host.has_method("open_shop_for_target") and bool(host.call("open_shop_for_target", self, node))
-	if t == "container":
-		return node is Node2D and host.has_method("open_container_for_target") and bool(host.call("open_container_for_target", self, node))
-	if t == "ground_item":
-		if node is GroundItem:
-			pickup_ground_item(node as GroundItem)
-			return true
-		return false
+	if host.has_method("open_facility_for_walker"):
+		return bool(host.call("open_facility_for_walker", self, node))
 	return false
 
 
@@ -688,6 +665,15 @@ func add_satiation(amount: float) -> void:
 		satiation_changed.emit(satiation, satiation_max)
 
 
+func add_energy(amount: float) -> void:
+	if amount <= 0.0:
+		return
+	var prev: float = energy
+	energy = minf(energy_max, energy + amount)
+	if not is_equal_approx(energy, prev):
+		energy_changed.emit(energy, energy_max)
+
+
 ## 从背包按 id 移除至多 [param count] 个（跨多格）；返回实际移除数量。
 func remove_items_from_inventory_by_id(item_id: String, count: int) -> int:
 	if count <= 0:
@@ -866,6 +852,12 @@ func _physics_process(delta: float) -> void:
 		satiation = maxf(0.0, satiation - satiation_drain_per_sec * delta)
 		if not is_equal_approx(satiation, prev_s):
 			satiation_changed.emit(satiation, satiation_max)
+
+	if hp > 0 and energy > 0.0:
+		var prev_e: float = energy
+		energy = maxf(0.0, energy - energy_drain_per_sec * delta)
+		if not is_equal_approx(energy, prev_e):
+			energy_changed.emit(energy, energy_max)
 
 	if _action_busy_left > 0.0:
 		_action_busy_left = maxf(0.0, _action_busy_left - delta)

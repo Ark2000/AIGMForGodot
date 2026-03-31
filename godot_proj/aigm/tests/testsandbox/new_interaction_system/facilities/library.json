@@ -1,0 +1,29 @@
+{
+  "id": "library",
+  "name": "图书馆",
+  "category": "training",
+  "tags": ["training", "intelligence", "knowledge", "quiet", "focus"],
+  "services": [
+    {
+      "type": "study",
+      "needs": ["training", "intelligence_growth", "knowledge"],
+      "duration_sec": 100,
+      "effects": [
+        { "stat": "intelligence_exp", "operation": "add", "value": 30 },
+        { "stat": "max_energy", "operation": "add", "value": 1 },
+        { "stat": "focus", "operation": "add", "value": 10 },
+        { "stat": "energy", "operation": "add", "value": -10 }
+      ],
+      "cost": { "money": 0, "energy": 10 },
+      "constraints": {
+        "max_concurrent_users": 10,
+        "can_interrupt": true,
+        "silence_required": true
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 130,
+    "sprite": "library.png"
+  }
+}

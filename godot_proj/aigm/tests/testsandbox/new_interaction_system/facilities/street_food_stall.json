@@ -1,0 +1,28 @@
+{
+  "id": "street_food_stall",
+  "name": "路边小吃摊",
+  "category": "food",
+  "tags": ["food", "hot_meal", "cheap", "outdoor", "limited_hours"],
+  "services": [
+    {
+      "type": "buy_hot_meal",
+      "needs": ["hunger", "comfort_food"],
+      "duration_sec": 15,
+      "effects": [
+        { "stat": "satiation", "operation": "add", "value": 35 },
+        { "stat": "comfort", "operation": "add", "value": 10 },
+        { "stat": "mood", "operation": "add", "value": 5 }
+      ],
+      "cost": { "money": 12 },
+      "constraints": {
+        "max_concurrent_users": 3,
+        "can_interrupt": false,
+        "operating_hours": { "open": 6, "close": 22 }
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 85,
+    "sprite": "food_stall.png"
+  }
+}

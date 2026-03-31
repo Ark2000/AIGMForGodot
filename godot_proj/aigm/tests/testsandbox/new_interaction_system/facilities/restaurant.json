@@ -1,0 +1,29 @@
+{
+  "id": "restaurant",
+  "name": "餐厅",
+  "category": "food",
+  "tags": ["food", "luxury", "social", "slow", "high_quality"],
+  "services": [
+    {
+      "type": "dine_in",
+      "needs": ["hunger", "social", "luxury"],
+      "duration_sec": 60,
+      "effects": [
+        { "stat": "satiation", "operation": "add", "value": 60 },
+        { "stat": "hydration", "operation": "add", "value": 30 },
+        { "stat": "comfort", "operation": "add", "value": 15 },
+        { "stat": "mood", "operation": "add", "value": 20 }
+      ],
+      "cost": { "money": 45 },
+      "constraints": {
+        "max_concurrent_users": 8,
+        "can_interrupt": false,
+        "operating_hours": { "open": 7, "close": 23 }
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 100,
+    "sprite": "restaurant.png"
+  }
+}

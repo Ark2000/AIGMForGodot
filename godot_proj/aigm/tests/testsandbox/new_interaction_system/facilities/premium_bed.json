@@ -1,0 +1,27 @@
+{
+  "id": "premium_bed",
+  "name": "高级软床",
+  "category": "rest",
+  "tags": ["sleep", "rest", "luxury", "comfortable", "indoor"],
+  "services": [
+    {
+      "type": "sleep_luxury",
+      "needs": ["rest", "tiredness", "comfort"],
+      "duration_sec": 30,
+      "effects": [
+        { "stat": "energy", "operation": "restore_pct", "value": 0.9 },
+        { "stat": "comfort", "operation": "add", "value": 20 },
+        { "stat": "mood", "operation": "add", "value": 10 }
+      ],
+      "cost": { "money": 15 },
+      "constraints": {
+        "max_concurrent_users": 1,
+        "can_interrupt": false
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 90,
+    "sprite": "bed_premium.png"
+  }
+}

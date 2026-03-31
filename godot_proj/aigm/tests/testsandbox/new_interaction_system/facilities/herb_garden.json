@@ -1,0 +1,30 @@
+{
+  "id": "herb_garden",
+  "name": "药草园",
+  "category": "medical",
+  "tags": ["medical", "gathering", "natural", "free", "slow", "renewable"],
+  "services": [
+    {
+      "type": "gather_herbs",
+      "needs": ["healing", "gathering", "natural_medicine"],
+      "duration_sec": 45,
+      "effects": [
+        { "stat": "inventory_herbs", "operation": "add", "value": 3 },
+        { "stat": "nature_knowledge", "operation": "add", "value": 2 },
+        { "stat": "energy", "operation": "add", "value": -10 }
+      ],
+      "cost": { "energy": 10 },
+      "constraints": {
+        "max_concurrent_users": 4,
+        "can_interrupt": true,
+        "resource_limited": true,
+        "regen_rate": 300
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 140,
+    "sprite": "herb_garden.png"
+  },
+  "ai_controller": "res://new_interaction_system/controllers/resource_gather_controller.gd"
+}

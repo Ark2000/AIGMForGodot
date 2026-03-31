@@ -88,21 +88,17 @@ func _activate_selected() -> void:
 	if node == null:
 		_hint.text = "目标已失效"
 		return
-	var t: String = str(target.get("type", ""))
 	var ok: bool = false
-	if t == "ground_item":
-		if node is GroundItem and _walker.has_method("pickup_ground_item"):
-			_walker.call("pickup_ground_item", node)
-			ok = true
+	if node is GroundItem and _walker.has_method("pickup_ground_item"):
+		_walker.call("pickup_ground_item", node)
+		ok = true
 	else:
 		var host: Node = get_tree().get_first_node_in_group("interaction_ui_host")
 		if host == null:
 			_hint.text = "交互 UI 未就绪"
 			return
-		if t == "shop":
-			ok = host.has_method("open_shop_for_target") and bool(host.call("open_shop_for_target", _walker, node))
-		elif t == "container":
-			ok = host.has_method("open_container_for_target") and bool(host.call("open_container_for_target", _walker, node))
+		if host.has_method("open_facility_for_walker"):
+			ok = bool(host.call("open_facility_for_walker", _walker, node))
 	if ok:
 		close()
 	else:

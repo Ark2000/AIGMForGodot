@@ -1,13 +1,15 @@
 extends Node
 class_name NpcBehavior
-## 挂在 [NekomimiWalker] 下：游荡、环境台词、**战斗 AI 状态机**（追击 / 逃跑 / 脱战）、**觅食**（饱食度低时吃面包 / 找地面与容器）、自动拾取等。
-## 需要角色与箱子/储物格交互（不经 UI）时：拿到储物容器节点（`item_container.gd`），调用 `deposit_from_walker` / `withdraw_to_walker`（与 [ContainerPanel] 共用实现）。
+## 挂在 [NekomimiWalker] 下：游荡、环境台词、**战斗 AI**、**觅食**、基于效用的 **休息 / 打工**（缺钱买食物时才会高分去工作，非写死）、自动拾取等。
+## 与设施脚本交互不经 [NekomimiWalker]：直接找 `item_container` / `shop_point` / `bed_point` / `work_point` 节点调用其方法即可。
 
 enum AiState {
 	WANDER, ## 随机游荡（由到达目标等信号驱动）
 	COMBAT, ## 追击威胁并进入近战则出手
 	FLEE, ## 拉远距离，持续一段时间后再评估
 	FORAGE, ## 饱食度低：优先吃背包 → 靠近地面食物 → 靠近容器取食 → 附近乱走搜刮
+	REST, ## 精力低：去 [group bed_point] 睡觉
+	WORK, ## 效用认为缺钱买食物：去 [group work_point] 打工
 }
 
 @export_group("Items (AI behavior)")
@@ -38,6 +40,28 @@ enum AiState {
 
 @export_group("Forage speech (empty = skip)")
 @export var speech_enter_forage: Array[String] = ["肚子饿了喵…", "想吃点面包…", "去找点吃的。"]
+
+@export_group("Drives (utility AI)")
+## 为真时在 [enum AiState.WANDER] 用效用分在「觅食 / 睡觉 / 打工」间取舍；打工分仅在「饿且无免费食物、商店有卖但钱不够」时升高。
+@export var drives_enabled: bool = true
+## 睡觉冲动权重（精力低于 [member rest_enter_below_ratio] 时打分升高）。
+@export_range(0.0, 3.0, 0.05) var drive_weight_rest: float = 1.12
+## 觅食冲动权重。
+@export_range(0.0, 3.0, 0.05) var drive_weight_food: float = 1.0
+## 挣钱冲动权重（与饥饿与买不起食物的缺口相关）。
+@export_range(0.0, 3.0, 0.05) var drive_weight_money: float = 1.08
+## 低于 精力×该比例 时可能选择去睡觉。
+@export_range(0.05, 0.95, 0.01) var rest_enter_below_ratio: float = 0.36
+## 高于 精力×该比例 时退出睡觉状态。
+@export_range(0.1, 1.0, 0.01) var rest_exit_above_ratio: float = 0.78
+## 床、打工点搜索半径（像素）。
+@export var drive_search_radius: float = 920.0
+## 进入 [enum AiState.WORK] 的最低效用档位（避免噪声抖动）。
+@export var drive_enter_threshold: float = 0.055
+
+@export_group("Drive speech (empty = skip)")
+@export var speech_enter_rest: Array[String] = ["好困喵…", "想躺一下…"]
+@export var speech_enter_work: Array[String] = ["先去赚点钱…", "打份工好了。"]
 
 @export_group("Wander")
 ## 是否启用随机游荡（到达目标后再选点）。
@@ -146,6 +170,10 @@ var _forage_next_explore_at: float = 0.0
 var _forage_next_scan_at: float = 0.0
 ## 觅食：是否正在执行设施会话（箱子/商店），避免并发重复触发。
 var _forage_session_busy: bool = false
+var _rest_session_busy: bool = false
+var _work_session_busy: bool = false
+var _drive_rest_facility: Node2D = null
+var _drive_work_facility: Node2D = null
 
 const _DEFAULT_HURT_LINES: PackedStringArray = ["呜…好痛！", "别打啦喵！", "好过分！", "好疼…"]
 
@@ -163,7 +191,7 @@ func _ready() -> void:
 		_reset_timer()
 	else:
 		set_process(false)
-	set_physics_process(combat_ai_enabled or forage_enabled)
+	set_physics_process(combat_ai_enabled or forage_enabled or drives_enabled)
 	if wander_enabled:
 		_start_wander_routine()
 
@@ -180,6 +208,7 @@ func resume_after_control() -> void:
 	_ai_state = AiState.WANDER
 	_threat = null
 	_last_damage_time_sec = -1.0
+	_abort_drive_sessions()
 	_abort_interaction_sessions()
 	if random_speech_enabled:
 		set_process(true)
@@ -284,12 +313,14 @@ func _process(delta: float) -> void:
 func _physics_process(_delta: float) -> void:
 	if not _walker_is_npc():
 		return
-	if not combat_ai_enabled and not forage_enabled:
+	if not combat_ai_enabled and not forage_enabled and not drives_enabled:
 		return
 	var w: NekomimiWalker = get_parent() as NekomimiWalker
 	if w == null or w.hp <= 0:
 		return
-	if forage_enabled and _ai_state == AiState.WANDER:
+	if drives_enabled and _ai_state == AiState.WANDER:
+		_utility_try_enter_drive_state(w)
+	elif forage_enabled and _ai_state == AiState.WANDER:
 		if w.satiation <= w.satiation_max * forage_enter_below_ratio:
 			_enter_forage_state()
 	match _ai_state:
@@ -304,6 +335,12 @@ func _physics_process(_delta: float) -> void:
 		AiState.FORAGE:
 			if forage_enabled:
 				_tick_forage(w)
+		AiState.REST:
+			if drives_enabled:
+				_tick_rest(w)
+		AiState.WORK:
+			if drives_enabled:
+				_tick_work(w)
 
 
 func _resolve_threat() -> void:
@@ -384,6 +421,7 @@ func _enter_wander(_reason: String = "") -> void:
 
 func _enter_combat(w: NekomimiWalker, attacker: Node) -> void:
 	_clear_forage_targets()
+	_abort_drive_sessions()
 	if attacker is Node2D:
 		_threat = attacker as Node2D
 	_ai_state = AiState.COMBAT
@@ -397,6 +435,7 @@ func _enter_combat(w: NekomimiWalker, attacker: Node) -> void:
 
 func _enter_flee(w: NekomimiWalker, attacker: Node) -> void:
 	_clear_forage_targets()
+	_abort_drive_sessions()
 	if attacker is Node2D:
 		_threat = attacker as Node2D
 	_ai_state = AiState.FLEE
@@ -454,9 +493,215 @@ func _enter_forage_state() -> void:
 	_ai_state = AiState.FORAGE
 	_clear_forage_targets()
 	_forage_session_busy = false
+	_abort_drive_sessions()
 	_forage_next_explore_at = _now_sec()
 	_forage_next_scan_at = 0.0
 	_say_from_pool(speech_enter_forage)
+
+
+func _enter_rest_state() -> void:
+	_ai_state = AiState.REST
+	_clear_forage_targets()
+	_forage_session_busy = false
+	_abort_drive_sessions()
+	_drive_rest_facility = null
+	_say_from_pool(speech_enter_rest)
+
+
+func _enter_work_state() -> void:
+	_ai_state = AiState.WORK
+	_clear_forage_targets()
+	_forage_session_busy = false
+	_abort_drive_sessions()
+	_drive_work_facility = null
+	_say_from_pool(speech_enter_work)
+
+
+func _utility_score_food_need(w: NekomimiWalker) -> float:
+	if not forage_enabled:
+		return 0.0
+	if w.satiation >= w.satiation_max * forage_exit_above_ratio:
+		return 0.0
+	if w.satiation > w.satiation_max * forage_enter_below_ratio:
+		return 0.0
+	var thr: float = w.satiation_max * forage_enter_below_ratio
+	return clampf(1.0 - w.satiation / maxf(1.0, thr), 0.0, 1.0)
+
+
+func _utility_score_rest_need(w: NekomimiWalker) -> float:
+	if w.energy >= w.energy_max * rest_exit_above_ratio:
+		return 0.0
+	var thr_enter: float = w.energy_max * rest_enter_below_ratio
+	if w.energy > thr_enter:
+		return 0.0
+	return clampf(1.0 - w.energy / maxf(1.0, thr_enter), 0.0, 1.0)
+
+
+func _utility_score_money_need(w: NekomimiWalker) -> float:
+	if not forage_enabled:
+		return 0.0
+	if w.satiation >= w.satiation_max * forage_enter_below_ratio:
+		return 0.0
+	if _has_food_in_inventory(w):
+		return 0.0
+	if _find_nearest_ground_food(w) != null:
+		return 0.0
+	if _find_nearest_container_with_food(w) != null:
+		return 0.0
+	var shop: Node2D = _find_nearest_shop_point(w)
+	if shop == null:
+		return 0.0
+	var fid: String = _pick_shop_food_id(shop)
+	if fid.is_empty():
+		return 0.0
+	var price: int = int(shop.call("get_buy_price", fid)) if shop.has_method("get_buy_price") else ItemDB.get_price(fid, 0)
+	if price <= 0:
+		return 0.0
+	if w.get_money() >= price:
+		return 0.0
+	if _find_nearest_work_point(w) == null:
+		return 0.0
+	var thr: float = w.satiation_max * forage_enter_below_ratio
+	var hunger: float = clampf(1.0 - w.satiation / maxf(1.0, thr), 0.0, 1.0)
+	var shortf: float = clampf(1.0 - float(w.get_money()) / float(price), 0.0, 1.0)
+	return clampf(hunger * 0.52 + shortf * 0.48, 0.0, 1.0)
+
+
+func _utility_try_enter_drive_state(w: NekomimiWalker) -> void:
+	var sf: float = _utility_score_food_need(w) * drive_weight_food
+	var sr: float = _utility_score_rest_need(w) * drive_weight_rest
+	var sm: float = _utility_score_money_need(w) * drive_weight_money
+	var best: float = maxf(sf, maxf(sr, sm))
+	if best < drive_enter_threshold:
+		return
+	if sf >= sr and sf >= sm:
+		_enter_forage_state()
+	elif sr >= sm:
+		_enter_rest_state()
+	else:
+		_enter_work_state()
+
+
+## 在 [param radius] 内找最近的可 [method can_interact] 设施（商店/床/工位等共用）。
+func _find_nearest_facility(w: NekomimiWalker, group_name: String, radius: float) -> Node2D:
+	var best: Node2D = null
+	var best_d2: float = INF
+	var r2: float = radius * radius
+	var p: Vector2 = w.global_position
+	for n in get_tree().get_nodes_in_group(group_name):
+		if not is_instance_valid(n) or not (n is Node2D):
+			continue
+		var node2d: Node2D = n as Node2D
+		if node2d.has_method("can_interact") and not bool(node2d.call("can_interact", w)):
+			continue
+		var d2: float = p.distance_squared_to(node2d.global_position)
+		if d2 <= r2 and d2 < best_d2:
+			best = node2d
+			best_d2 = d2
+	return best
+
+
+func _find_nearest_bed_point(w: NekomimiWalker) -> Node2D:
+	return _find_nearest_facility(w, "bed_point", drive_search_radius)
+
+
+func _find_nearest_work_point(w: NekomimiWalker) -> Node2D:
+	return _find_nearest_facility(w, "work_point", drive_search_radius)
+
+
+func _tick_rest(w: NekomimiWalker) -> void:
+	if w.is_action_locked():
+		return
+	if _rest_session_busy:
+		return
+	if w.energy >= w.energy_max * rest_exit_above_ratio:
+		_enter_wander("rested")
+		return
+	if _drive_rest_facility != null and not is_instance_valid(_drive_rest_facility):
+		_drive_rest_facility = null
+	if _drive_rest_facility == null:
+		_drive_rest_facility = _find_nearest_bed_point(w)
+	if _drive_rest_facility == null:
+		_enter_wander("no_bed")
+		return
+	w.move_to(_drive_rest_facility.global_position)
+	if _drive_rest_facility.has_method("is_walker_in_range") and bool(_drive_rest_facility.call("is_walker_in_range", w)):
+		_start_npc_timed_drive_session(w, _drive_rest_facility, true)
+
+
+func _work_money_still_urgent(w: NekomimiWalker) -> bool:
+	return _utility_score_money_need(w) >= drive_enter_threshold * 0.55
+
+
+func _tick_work(w: NekomimiWalker) -> void:
+	if w.is_action_locked():
+		return
+	if _work_session_busy:
+		return
+	if not _work_money_still_urgent(w):
+		_enter_wander("work_money_ok")
+		return
+	if _drive_work_facility != null and not is_instance_valid(_drive_work_facility):
+		_drive_work_facility = null
+	if _drive_work_facility == null:
+		_drive_work_facility = _find_nearest_work_point(w)
+	if _drive_work_facility == null:
+		_enter_wander("no_work")
+		return
+	w.move_to(_drive_work_facility.global_position)
+	if _drive_work_facility.has_method("is_walker_in_range") and bool(_drive_work_facility.call("is_walker_in_range", w)):
+		_start_npc_timed_drive_session(w, _drive_work_facility, false)
+
+
+## [param is_rest]：true=床（[method apply_rest_to_walker]），false=工位（[method apply_pay_to_walker]）。
+func _start_npc_timed_drive_session(w: NekomimiWalker, facility: Node, is_rest: bool) -> void:
+	if facility == null:
+		return
+	if is_rest and _rest_session_busy:
+		return
+	if not is_rest and _work_session_busy:
+		return
+	if not facility.has_method("try_acquire") or not bool(facility.call("try_acquire", w)):
+		return
+	if is_rest:
+		_rest_session_busy = true
+	else:
+		_work_session_busy = true
+	var dur: float = float(facility.call("get_npc_action_duration_sec")) if facility.has_method("get_npc_action_duration_sec") else (4.5 if is_rest else 3.0)
+	dur = maxf(0.05, dur)
+	var lock_text: String = "睡眠中" if is_rest else "打工中"
+	w.start_action_lock(lock_text, dur, "")
+	await get_tree().create_timer(dur).timeout
+	var expect: AiState = AiState.REST if is_rest else AiState.WORK
+	if not is_instance_valid(w) or not _walker_is_npc():
+		if is_instance_valid(facility) and facility.has_method("release"):
+			facility.call("release", w if is_instance_valid(w) else null)
+		if is_rest:
+			_rest_session_busy = false
+		else:
+			_work_session_busy = false
+		return
+	if _ai_state != expect:
+		if is_instance_valid(facility) and facility.has_method("release"):
+			facility.call("release", w)
+		if is_rest:
+			_rest_session_busy = false
+		else:
+			_work_session_busy = false
+		return
+	if is_instance_valid(facility):
+		if is_rest:
+			if facility.has_method("apply_rest_to_walker"):
+				facility.call("apply_rest_to_walker", w)
+		else:
+			if facility.has_method("apply_pay_to_walker"):
+				facility.call("apply_pay_to_walker", w)
+		if facility.has_method("release"):
+			facility.call("release", w)
+	if is_rest:
+		_rest_session_busy = false
+	else:
+		_work_session_busy = false
 
 
 func _tick_forage(w: NekomimiWalker) -> void:
@@ -577,21 +822,7 @@ func _start_forage_container_session(w: NekomimiWalker, c: Node) -> void:
 
 
 func _find_nearest_shop_point(w: NekomimiWalker) -> Node2D:
-	var best: Node2D = null
-	var best_d2: float = INF
-	var r2: float = forage_max_search_radius * forage_max_search_radius
-	var p: Vector2 = w.global_position
-	for n in get_tree().get_nodes_in_group("shop_point"):
-		if not is_instance_valid(n) or not (n is Node2D):
-			continue
-		var sp: Node2D = n as Node2D
-		if sp.has_method("can_interact") and not bool(sp.call("can_interact", w)):
-			continue
-		var d2: float = p.distance_squared_to(sp.global_position)
-		if d2 <= r2 and d2 < best_d2:
-			best = sp
-			best_d2 = d2
-	return best
+	return _find_nearest_facility(w, "shop_point", forage_max_search_radius)
 
 
 func _pick_shop_food_id(shop: Node) -> String:
@@ -657,7 +888,22 @@ func _start_forage_shop_session(w: NekomimiWalker, shop: Node) -> void:
 	_forage_session_busy = false
 
 
+func _abort_drive_sessions() -> void:
+	var w: NekomimiWalker = get_parent() as NekomimiWalker
+	if w != null:
+		for group_name in ["bed_point", "work_point"]:
+			for n in get_tree().get_nodes_in_group(group_name):
+				if n.has_method("get_current_user") and n.call("get_current_user") == w:
+					if n.has_method("release"):
+						n.call("release", w)
+	_rest_session_busy = false
+	_work_session_busy = false
+	_drive_rest_facility = null
+	_drive_work_facility = null
+
+
 func _abort_interaction_sessions() -> void:
+	_abort_drive_sessions()
 	var w: NekomimiWalker = get_parent() as NekomimiWalker
 	if w == null:
 		return

@@ -73,6 +73,22 @@ func get_interact_label() -> String:
 	return "容器 · %s" % display_name if not display_name.is_empty() else "容器"
 
 
+func build_f_interact_entry(walker: NekomimiWalker) -> Dictionary:
+	if walker == null or not can_interact(walker):
+		return {}
+	return {
+		"node": self,
+		"label": get_interact_label(),
+		"d2": walker.global_position.distance_squared_to(global_position),
+	}
+
+
+func open_player_interaction(host: Node, walker: NekomimiWalker) -> bool:
+	if host == null or walker == null:
+		return false
+	return host.has_method("open_container_for_target") and bool(host.call("open_container_for_target", walker, self))
+
+
 func get_current_user() -> NekomimiWalker:
 	if _session_owner == null or not is_instance_valid(_session_owner):
 		return null

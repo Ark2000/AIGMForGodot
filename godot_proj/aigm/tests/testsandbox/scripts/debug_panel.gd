@@ -184,11 +184,14 @@ func _refresh_stats_line() -> void:
 		return
 	var hpmax: int = maxi(1, w.combat_max_hp)
 	var smax: float = maxf(0.001, w.satiation_max)
-	lbl.text = "HP %d/%d · 饱食%d/%d · 速%d" % [
+	var emax: float = maxf(0.001, w.energy_max)
+	lbl.text = "HP %d/%d · 饱食%d/%d · 精力%d/%d · 速%d" % [
 		w.hp,
 		hpmax,
 		roundi(w.satiation),
 		roundi(smax),
+		roundi(w.energy),
+		roundi(emax),
 		roundi(w.move_speed),
 	]
 

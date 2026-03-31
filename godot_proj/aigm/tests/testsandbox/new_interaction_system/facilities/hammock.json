@@ -1,0 +1,27 @@
+{
+  "id": "hammock",
+  "name": "吊床",
+  "category": "rest",
+  "tags": ["sleep", "rest", "outdoor", "cheap", "weather_dependent"],
+  "services": [
+    {
+      "type": "nap_outdoor",
+      "needs": ["rest", "tiredness"],
+      "duration_sec": 60,
+      "effects": [
+        { "stat": "energy", "operation": "add", "value": 25 },
+        { "stat": "comfort", "operation": "add", "value": 8 }
+      ],
+      "cost": { "money": 0 },
+      "constraints": {
+        "max_concurrent_users": 1,
+        "can_interrupt": true,
+        "weather_sensitive": true
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 70,
+    "sprite": "hammock.png"
+  }
+}

@@ -1,0 +1,104 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "FacilityConfig",
+  "description": "设施配置标准格式",
+  "type": "object",
+  "required": ["id", "name", "category", "services"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "唯一标识符"
+    },
+    "name": {
+      "type": "string",
+      "description": "显示名称"
+    },
+    "category": {
+      "type": "string",
+      "enum": ["rest", "food", "work", "training", "medical", "social", "storage", "misc"],
+      "description": "设施大类"
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "用于搜索和筛选的标签"
+    },
+    "services": {
+      "type": "array",
+      "description": "提供的所有服务",
+      "items": {
+        "type": "object",
+        "required": ["type", "duration_sec"],
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "服务类型标识"
+          },
+          "duration_sec": {
+            "type": "number",
+            "minimum": 0.1
+          },
+          "needs": {
+            "type": "array",
+            "description": "可以满足的需求类型",
+            "items": { "type": "string" }
+          },
+          "effects": {
+            "type": "array",
+            "description": "效果列表",
+            "items": {
+              "type": "object",
+              "properties": {
+                "stat": { "type": "string" },
+                "operation": { "enum": ["add", "set", "multiply", "restore_pct"] },
+                "value": { "type": "number" }
+              }
+            }
+          },
+          "cost": {
+            "type": "object",
+            "properties": {
+              "money": { "type": "number", "default": 0 },
+              "energy": { "type": "number", "default": 0 },
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "item_id": { "type": "string" },
+                    "count": { "type": "number" }
+                  }
+                }
+              }
+            }
+          },
+          "constraints": {
+            "type": "object",
+            "properties": {
+              "max_concurrent_users": { "type": "number", "default": 1 },
+              "requires_item": { "type": "string" },
+              "min_stat_requirements": {
+                "type": "object",
+                "description": "使用者的最低属性要求"
+              },
+              "can_interrupt": { "type": "boolean", "default": false }
+            }
+          }
+        }
+      }
+    },
+    "physical": {
+      "type": "object",
+      "properties": {
+        "interact_radius": { "type": "number", "default": 88 },
+        "collision_size": { "type": "array", "items": { "type": "number" } },
+        "sprite": { "type": "string" }
+      }
+    },
+    "ai_controller": {
+      "type": "string",
+      "description": "可选的自定义AI控制器路径",
+      "default": "res://new_interaction_system/controllers/timed_interaction_controller.gd"
+    }
+  }
+}

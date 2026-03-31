@@ -1,0 +1,27 @@
+{
+  "id": "training_dummy",
+  "name": "训练假人",
+  "category": "training",
+  "tags": ["training", "combat", "melee", "free", "beginner_friendly"],
+  "services": [
+    {
+      "type": "melee_training",
+      "needs": ["training", "combat_skill", "melee_weapon"],
+      "duration_sec": 50,
+      "effects": [
+        { "stat": "melee_exp", "operation": "add", "value": 20 },
+        { "stat": "strength_exp", "operation": "add", "value": 10 },
+        { "stat": "energy", "operation": "add", "value": -25 }
+      ],
+      "cost": { "money": 0, "energy": 25 },
+      "constraints": {
+        "max_concurrent_users": 2,
+        "can_interrupt": true
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 65,
+    "sprite": "training_dummy.png"
+  }
+}

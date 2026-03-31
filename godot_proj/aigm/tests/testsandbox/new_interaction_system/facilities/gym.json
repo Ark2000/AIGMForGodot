@@ -1,0 +1,28 @@
+{
+  "id": "gym",
+  "name": "健身房",
+  "category": "training",
+  "tags": ["training", "strength", "physical", "stat_growth", "exhausting"],
+  "services": [
+    {
+      "type": "strength_training",
+      "needs": ["training", "strength_growth", "fitness"],
+      "duration_sec": 75,
+      "effects": [
+        { "stat": "strength_exp", "operation": "add", "value": 25 },
+        { "stat": "max_health", "operation": "add", "value": 2 },
+        { "stat": "energy", "operation": "add", "value": -35 },
+        { "stat": "stress", "operation": "add", "value": -10 }
+      ],
+      "cost": { "money": 20, "energy": 35 },
+      "constraints": {
+        "max_concurrent_users": 6,
+        "can_interrupt": false
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 110,
+    "sprite": "gym.png"
+  }
+}

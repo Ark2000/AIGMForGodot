@@ -23,6 +23,7 @@ var _player_nearby_count: int = 0
 
 func _ready() -> void:
 	add_to_group("ground_item")
+	add_to_group("interactable_facility")
 	collision_layer = PICKUP_LAYER_BIT
 	collision_mask = 0
 	monitorable = true
@@ -82,6 +83,31 @@ func _refresh_name_label() -> void:
 		_name_label.text = "%s × %d" % [display, quantity]
 	else:
 		_name_label.text = display
+
+
+func build_f_interact_entry(walker: NekomimiWalker) -> Dictionary:
+	if walker == null or not walker.has_method("get_ground_items"):
+		return {}
+	for gi in walker.get_ground_items():
+		if gi == self:
+			var def: Dictionary = ItemDB.get_def(item_id)
+			var disp: String = str(def.get("name", item_id)) if not def.is_empty() else item_id
+			var glbl: String = "拾取 · %s" % disp
+			if quantity > 1:
+				glbl += " × %d" % quantity
+			return {
+				"node": self,
+				"label": glbl,
+				"d2": walker.global_position.distance_squared_to(global_position),
+			}
+	return {}
+
+
+func open_player_interaction(_host: Node, walker: NekomimiWalker) -> bool:
+	if walker == null:
+		return false
+	walker.pickup_ground_item(self)
+	return true
 
 
 ## 由玩家拾取后更新数量或移除；返回未能入包的数量。

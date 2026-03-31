@@ -1,6 +1,7 @@
 extends RefCounted
 
 const TOOL_NAME := "godot_eval_expression"
+const MAX_DELAY_SECONDS := 300.0
 const METHOD_SPECS := [
 	{"signature": "expr_get_engine_version()", "description": "Return Engine version info JSON string."},
 	{"signature": "expr_get_os_name()", "description": "Return OS name string."},
@@ -9,6 +10,10 @@ const METHOD_SPECS := [
 	{
 		"signature": "expr_set_chat_background_color(\"#RRGGBB\" or \"#RRGGBBAA\")",
 		"description": "Set chat background color.",
+	},
+	{
+		"signature": "expr_npc_talk(\"text\")",
+		"description": "Speech bubble on the character the spectator camera is following; empty string hides it.",
 	},
 ]
 
@@ -22,9 +27,10 @@ func _init(owner: Node) -> void:
 func build_system_prompt_hint() -> String:
 	return (
 		"For Godot/engine/UI operations, call tool %s with one expression string. "
+		+ "Optional delay_seconds defers evaluation on the scene tree (max %.0fs). "
 		+ "Available expression methods are documented in the tool description. "
 		+ "Use double-quoted strings. Do not call unknown methods."
-	) % TOOL_NAME
+	) % [TOOL_NAME, MAX_DELAY_SECONDS]
 
 
 func build_tool_definition() -> Dictionary:
@@ -34,11 +40,21 @@ func build_tool_definition() -> Dictionary:
 			"name": TOOL_NAME,
 			"description": (
 				"Execute one Godot Expression in sandbox. "
+				+ "Optional delay_seconds waits on the scene tree before parse/execute (0–%.0f). "
 				+ "Allowed methods: %s"
-			) % _method_doc_list(),
+			) % [MAX_DELAY_SECONDS, _method_doc_list()],
 			"parameters": {
 				"type": "object",
-				"properties": {"expression": {"type": "string"}},
+				"properties": {
+					"expression": {"type": "string"},
+					"delay_seconds": {
+						"type": "number",
+						"description": (
+							"Wait this many seconds before evaluating the expression. "
+							+ "Omit or 0 for immediate. Fractional seconds allowed. Max %.0f."
+						) % MAX_DELAY_SECONDS,
+					},
+				},
 				"required": ["expression"]
 			}
 		}
@@ -52,6 +68,18 @@ func execute_tool(tool_name: String, args: Dictionary) -> String:
 func execute_tool_async(tool_name: String, args: Dictionary) -> String:
 	if tool_name != TOOL_NAME:
 		return "Error: unknown tool " + tool_name
+	var delay_s := 0.0
+	if args.has("delay_seconds"):
+		delay_s = float(args["delay_seconds"])
+	if delay_s < 0:
+		return "Error: delay_seconds must be >= 0"
+	if delay_s > MAX_DELAY_SECONDS:
+		return "Error: delay_seconds must be <= %.0f" % MAX_DELAY_SECONDS
+	if delay_s > 0.0:
+		var owner_for_timer := _owner()
+		if owner_for_timer == null:
+			return "Error: owner unavailable (cannot delay)"
+		await owner_for_timer.get_tree().create_timer(delay_s).timeout
 	var expr_s := str(args.get("expression", "")).strip_edges()
 	if expr_s.is_empty():
 		return "Error: empty expression"
@@ -93,6 +121,26 @@ func expr_set_chat_background_color(color_hex: String) -> String:
 	if parsed is String:
 		return parsed
 	owner.ui_set_chat_background_color.emit(parsed as Color)
+	return "ok"
+
+
+func expr_npc_talk(message: String) -> String:
+	var owner := _owner()
+	if owner == null:
+		return "Error: owner unavailable"
+	if not owner.is_inside_tree():
+		return "Error: owner not in tree"
+	var cam: Node = owner.get_tree().get_first_node_in_group("spectator_camera")
+	if cam == null:
+		return "Error: spectator_camera group empty (run testsandbox world with SpectatorCamera)"
+	if not cam.has_method("get_current_follow_target"):
+		return "Error: camera missing get_current_follow_target"
+	var walker: Variant = cam.call("get_current_follow_target")
+	if walker == null:
+		return "Error: no camera follow target (FREE mode or no trackable characters)"
+	if not walker.has_method("talk"):
+		return "Error: follow target has no talk()"
+	walker.call("talk", str(message))
 	return "ok"
 
 

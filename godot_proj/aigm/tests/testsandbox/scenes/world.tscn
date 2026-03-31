@@ -9,7 +9,9 @@
 [ext_resource type="Script" uid="uid://w3hdhiwbnbva" path="res://tests/testsandbox/scripts/spectator_camera.gd" id="8_scam"]
 [ext_resource type="PackedScene" uid="uid://b8k3m2c7n1qwx" path="res://tests/testsandbox/scenes/item_container.tscn" id="11_ictr"]
 [ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/shop_point.tscn" id="13_shop"]
-[ext_resource type="Script" path="res://tests/testsandbox/scripts/interaction_ui_host.gd" id="17_uihost"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/bed_point.tscn" id="14_bed"]
+[ext_resource type="PackedScene" path="res://tests/testsandbox/scenes/work_point.tscn" id="15_work"]
+[ext_resource type="Script" uid="uid://b3nroir2jo0ha" path="res://tests/testsandbox/scripts/interaction_ui_host.gd" id="17_uihost"]
 
 [node name="World" type="Node2D" unique_id=550588223]
 texture_filter = 6
@@ -65,7 +67,14 @@ preset_quantity = 30
 [node name="GeneralStore" parent="YSort" unique_id=981233005 instance=ExtResource("13_shop")]
 position = Vector2(33, 358)
 display_name = "杂货商店"
-preview_item_id = "misc_golden_coin"
+
+[node name="RestBed" parent="YSort" unique_id=429430641 instance=ExtResource("14_bed")]
+position = Vector2(-87, -57)
+display_name = "休息床"
+
+[node name="WorkSpot" parent="YSort" unique_id=2069819103 instance=ExtResource("15_work")]
+position = Vector2(526, -286)
+display_name = "打工亭"
 
 [node name="SpectatorCamera" type="Camera2D" parent="." unique_id=738148233]
 position_smoothing_enabled = true
@@ -74,5 +83,5 @@ script = ExtResource("8_scam")
 
 [node name="DebugPanel" parent="." unique_id=1065770395 instance=ExtResource("6_dbg")]
 
-[node name="InteractionUIHost" type="Node" parent="."]
+[node name="InteractionUIHost" type="Node" parent="." unique_id=1509716060]
 script = ExtResource("17_uihost")

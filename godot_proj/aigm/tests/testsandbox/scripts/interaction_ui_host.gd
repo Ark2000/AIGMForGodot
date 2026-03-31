@@ -11,6 +11,15 @@ func _ready() -> void:
 	add_to_group("interaction_ui_host")
 
 
+## 统一入口：设施实现 [method Node.open_player_interaction] 即可，无需改 [NekomimiWalker]。
+func open_facility_for_walker(walker: NekomimiWalker, facility: Node) -> bool:
+	if walker == null or facility == null:
+		return false
+	if facility.has_method("open_player_interaction"):
+		return bool(facility.call("open_player_interaction", self, walker))
+	return false
+
+
 func open_shop_for_target(walker: NekomimiWalker, shop: Node2D) -> bool:
 	if walker == null or shop == null:
 		return false

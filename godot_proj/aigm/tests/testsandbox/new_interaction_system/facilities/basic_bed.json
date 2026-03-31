@@ -1,0 +1,27 @@
+{
+  "id": "basic_bed",
+  "name": "简易床铺",
+  "category": "rest",
+  "tags": ["sleep", "rest", "cheap", "indoor"],
+  "services": [
+    {
+      "type": "sleep_basic",
+      "needs": ["rest", "tiredness"],
+      "duration_sec": 45,
+      "effects": [
+        { "stat": "energy", "operation": "add", "value": 40 },
+        { "stat": "comfort", "operation": "add", "value": 5 }
+      ],
+      "cost": { "money": 0 },
+      "constraints": {
+        "max_concurrent_users": 1,
+        "can_interrupt": true
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 80,
+    "sprite": "bed_basic.png"
+  },
+  "ai_controller": "res://new_interaction_system/controllers/timed_interaction_controller.gd"
+}

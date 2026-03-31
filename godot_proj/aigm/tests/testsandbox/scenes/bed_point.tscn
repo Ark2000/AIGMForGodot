@@ -1,0 +1,30 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://tests/testsandbox/scripts/bed_point.gd" id="1_script"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_interact"]
+radius = 88.0
+
+[node name="BedPoint" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -24)
+
+[node name="InteractArea" type="Area2D" parent="."]
+collision_layer = 0
+collision_mask = 1
+monitorable = false
+monitoring = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="InteractArea"]
+shape = SubResource("CircleShape2D_interact")
+
+[node name="HintLabel" type="Label" parent="."]
+offset_left = -80.0
+offset_top = -72.0
+offset_right = 80.0
+offset_bottom = -48.0
+horizontal_alignment = 1
+theme_override_font_sizes/font_size = 12
+text = "F 休息"

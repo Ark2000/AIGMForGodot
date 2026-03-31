@@ -1,0 +1,29 @@
+{
+  "id": "delivery_point",
+  "name": "快递收发点",
+  "category": "work",
+  "tags": ["work", "delivery", "mobile", "medium_skill", "tips"],
+  "services": [
+    {
+      "type": "delivery_job",
+      "needs": ["money", "employment", "exploration"],
+      "duration_sec": 120,
+      "effects": [
+        { "stat": "money", "operation": "add", "value": 35 },
+        { "stat": "energy", "operation": "add", "value": -20 },
+        { "stat": "map_knowledge", "operation": "add", "value": 5 }
+      ],
+      "cost": { "energy": 20 },
+      "constraints": {
+        "max_concurrent_users": 2,
+        "can_interrupt": false,
+        "requires_movement": true
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 70,
+    "sprite": "delivery_point.png"
+  },
+  "ai_controller": "res://new_interaction_system/controllers/movement_job_controller.gd"
+}

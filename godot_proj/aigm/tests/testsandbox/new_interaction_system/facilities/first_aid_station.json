@@ -1,0 +1,26 @@
+{
+  "id": "first_aid_station",
+  "name": "急救站",
+  "category": "medical",
+  "tags": ["medical", "healing", "emergency", "quick", "affordable"],
+  "services": [
+    {
+      "type": "first_aid",
+      "needs": ["healing", "emergency", "health_recovery"],
+      "duration_sec": 20,
+      "effects": [
+        { "stat": "health", "operation": "add", "value": 30 },
+        { "stat": "bleeding", "operation": "set", "value": 0 }
+      ],
+      "cost": { "money": 10 },
+      "constraints": {
+        "max_concurrent_users": 2,
+        "can_interrupt": false
+      }
+    }
+  ],
+  "physical": {
+    "interact_radius": 70,
+    "sprite": "first_aid.png"
+  }
+}
