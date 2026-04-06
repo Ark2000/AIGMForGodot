@@ -1,0 +1,17 @@
+[{
+    "type": "function",
+    "function": {
+        "name": "Calculator",
+        "description": "计算器，支持加减乘除",
+        "parameters": {
+            "type": "object",
+            "required": ["expression"],
+            "properties": {
+                "expression": {
+                    "type": "string",
+                    "description": "表达式写在这里"
+                }
+            }
+        }
+    }
+}]
