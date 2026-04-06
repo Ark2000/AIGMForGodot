@@ -1,0 +1,14 @@
+{
+  "id": "chatcmpl-test-stop",
+  "choices": [
+    {
+      "finish_reason": "stop",
+      "index": 0,
+      "message": {
+        "content": "done",
+        "role": "assistant"
+      }
+    }
+  ],
+  "object": "chat.completion"
+}
