@@ -3,4 +3,7 @@
 /android/
 
 # 本地密钥，勿提交（用 config.example.json 复制为 config.json）
-tests/llm_talk_cursor/config.json
+addons/aigm/config.json
+
+# lua-gdextension 预编译二进制体积大；首次克隆后运行 tools/fetch_lua_gdextension_build.ps1
+addons/lua-gdextension/build/

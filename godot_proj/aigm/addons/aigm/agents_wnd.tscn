@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://c0h88p5ls0iqn"]
 
-[ext_resource type="Script" uid="uid://t3aat7wsyukv" path="res://tests/llm_talk_cursor/agents_wnd.gd" id="1_l42ho"]
+[ext_resource type="Script" uid="uid://t3aat7wsyukv" path="res://addons/aigm/agents_wnd.gd" id="1_l42ho"]
 
 [node name="AgentsWnd" type="CanvasLayer" unique_id=3517936]
 layer = 99

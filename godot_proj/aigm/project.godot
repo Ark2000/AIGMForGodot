@@ -11,9 +11,13 @@ config_version=5
 [application]
 
 config/name="AIGM"
-run/main_scene="res://tests/llm_talk_cursor/agents_wnd.tscn"
+run/main_scene="uid://dxby8o4rc3qy2"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/aigm/plugin.cfg", "res://addons/lua-gdextension/plugin.cfg")
 
 [input]
 

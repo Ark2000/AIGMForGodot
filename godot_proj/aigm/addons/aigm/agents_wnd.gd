@@ -1,9 +1,35 @@
 extends CanvasLayer
 
-const AIGM_CONTROLLER_SCRIPT := preload("res://tests/llm_talk_cursor/aigm_stream.gd")
+const AIGM_CONTROLLER_SCRIPT := preload("res://addons/aigm/aigm_stream.gd")
 const HOTKEY_CODE_TOGGLE := 96
 const TYPEWRITER_CPS_BASE := 38.0
 const TYPEWRITER_CPS_MAX := 220.0
+
+## Per-tab UI + stream controller binding.
+class AgentPageState extends RefCounted:
+	var page: RichTextLabel
+	var controller: Node
+	var body := ""
+	var stream_base := ""
+	var stream_reply := ""
+	var display_reply_len := 0
+	var typewriter_accum := 0.0
+	var stream_finished := false
+	var waiting := false
+	var base_title := ""
+	var ai_label := ""
+	var is_typing := false
+
+	func reset_stream(clear_body: bool) -> void:
+		if clear_body:
+			body = ""
+		stream_base = ""
+		stream_reply = ""
+		display_reply_len = 0
+		typewriter_accum = 0.0
+		is_typing = false
+		stream_finished = false
+
 
 @onready var _bg: Panel = $Bg
 @onready var _root_vbox: VBoxContainer = $VBoxContainer
@@ -16,17 +42,7 @@ const TYPEWRITER_CPS_MAX := 220.0
 
 var _ui_open := false
 var _agent_serial := 1
-var _page_to_controller: Dictionary = {} # page(RichTextLabel) -> controller(Node)
-var _page_to_body: Dictionary = {} # page(RichTextLabel) -> String
-var _page_to_stream_base: Dictionary = {} # page(RichTextLabel) -> String
-var _page_to_stream_reply: Dictionary = {} # page(RichTextLabel) -> String
-var _page_to_display_reply_len: Dictionary = {} # page(RichTextLabel) -> int
-var _page_to_typewriter_accum: Dictionary = {} # page(RichTextLabel) -> float
-var _page_is_typing: Dictionary = {} # page(RichTextLabel) -> true
-var _page_to_stream_finished: Dictionary = {} # page(RichTextLabel) -> bool
-var _page_to_waiting: Dictionary = {} # page(RichTextLabel) -> bool
-var _page_to_title: Dictionary = {} # page(RichTextLabel) -> String
-var _page_to_ai_label: Dictionary = {} # page(RichTextLabel) -> String
+var _page_states: Dictionary = {} # RichTextLabel -> AgentPageState
 var _controllers_host: Node
 
 
@@ -44,7 +60,6 @@ func _ready() -> void:
 	_send_btn.pressed.connect(_on_send_pressed)
 	_input_edit.text_submitted.connect(_on_input_submitted)
 
-	# 场景里的示例页在运行期清空，全部动态创建。
 	for child in _contents.get_children():
 		child.queue_free()
 
@@ -93,15 +108,13 @@ func _spawn_agent_tab(make_current: bool) -> void:
 	var tab_idx := _contents.get_tab_count() - 1
 	var tab_title := "Agent %d" % _agent_serial
 	_contents.set_tab_title(tab_idx, tab_title)
-	_page_to_controller[page] = controller
-	_page_to_body[page] = ""
-	_page_to_stream_base[page] = ""
-	_page_to_stream_reply[page] = ""
-	_page_to_display_reply_len[page] = 0
-	_page_to_typewriter_accum[page] = 0.0
-	_page_to_stream_finished[page] = false
-	_page_to_waiting[page] = false
-	_page_to_title[page] = tab_title
+
+	var st := AgentPageState.new()
+	st.page = page
+	st.controller = controller
+	st.base_title = tab_title
+	_page_states[page] = st
+
 	_bind_controller_signals(controller, page)
 	_agent_serial += 1
 
@@ -112,31 +125,24 @@ func _spawn_agent_tab(make_current: bool) -> void:
 	_input_edit.grab_focus()
 
 
+func _state_for_page(page: RichTextLabel) -> AgentPageState:
+	return _page_states.get(page, null) as AgentPageState
+
+
 func _close_tab_by_index(tab_idx: int) -> void:
 	if tab_idx < 0 or tab_idx >= _contents.get_tab_count():
 		return
 	var page := _contents.get_child(tab_idx) as RichTextLabel
 	if page == null:
 		return
+	var st := _state_for_page(page)
+	if st != null and st.controller != null and st.controller.has_method("cancel_current_request"):
+		st.controller.call("cancel_current_request")
 
-	var controller: Node = _page_to_controller.get(page, null)
-	if controller != null and controller.has_method("cancel_current_request"):
-		controller.call("cancel_current_request")
-
-	_page_to_controller.erase(page)
-	_page_to_body.erase(page)
-	_page_to_stream_base.erase(page)
-	_page_to_stream_reply.erase(page)
-	_page_to_display_reply_len.erase(page)
-	_page_to_typewriter_accum.erase(page)
-	_page_is_typing.erase(page)
-	_page_to_stream_finished.erase(page)
-	_page_to_waiting.erase(page)
-	_page_to_title.erase(page)
-	_page_to_ai_label.erase(page)
+	_page_states.erase(page)
 	page.queue_free()
-	if controller != null:
-		controller.queue_free()
+	if st != null and st.controller != null:
+		st.controller.queue_free()
 
 	if _contents.get_tab_count() <= 1:
 		call_deferred("_ensure_at_least_one_tab")
@@ -191,9 +197,9 @@ func _submit_input_to_current_agent() -> void:
 	var page := _get_current_page()
 	if page == null:
 		return
-	var controller: Node = _page_to_controller.get(page, null)
-	if controller != null and controller.has_method("submit_user_message"):
-		controller.call("submit_user_message", text)
+	var st := _state_for_page(page)
+	if st != null and st.controller != null and st.controller.has_method("submit_user_message"):
+		st.controller.call("submit_user_message", text)
 	_input_edit.clear()
 	_focus_input_if_open()
 
@@ -228,73 +234,65 @@ func _bind_controller_signals(controller: Node, page: RichTextLabel) -> void:
 
 
 func _on_agent_chat_line(role: String, text: String, page: RichTextLabel) -> void:
+	var st := _state_for_page(page)
+	if st == null:
+		return
 	var role_color := _role_color(role)
 	var ts_part := ""
 	if role == "你" or role == "工具":
 		ts_part = "[color=#94a3b8]%s[/color] " % _ts()
 	var line := "%s[color=%s][b][%s][/b][/color] %s\n" % [ts_part, role_color, _esc(role), _esc(text)]
-	var body: String = _page_to_body.get(page, "")
-	body += line
-	_page_to_body[page] = body
-	# If typewriter is still rendering an assistant turn, also extend stream base.
-	# Otherwise _process() may repaint and overwrite newly appended tool/system lines.
-	if _page_is_typing.has(page):
-		var base: String = _page_to_stream_base.get(page, "")
-		base += line
-		_page_to_stream_base[page] = base
-		var full_reply: String = _page_to_stream_reply.get(page, "")
-		var display_len: int = int(_page_to_display_reply_len.get(page, 0))
-		display_len = min(display_len, full_reply.length())
-		var shown_reply: String = full_reply.substr(0, display_len)
-		var ai_label: String = _page_to_ai_label.get(page, _ai_label_with_ts())
-		page.text = base + ai_label + _esc(shown_reply)
+	st.body += line
+	if st.is_typing:
+		st.stream_base += line
+		_render_stream_preview(st)
 	else:
-		page.text = body
+		page.text = st.body
 
 
 func _on_agent_chat_cleared(page: RichTextLabel) -> void:
-	_page_to_body[page] = ""
-	_page_to_stream_base[page] = ""
-	_page_to_stream_reply[page] = ""
-	_page_to_display_reply_len[page] = 0
-	_page_to_typewriter_accum[page] = 0.0
-	_page_is_typing.erase(page)
-	_page_to_stream_finished.erase(page)
-	_page_to_ai_label.erase(page)
+	var st := _state_for_page(page)
+	if st == null:
+		return
+	st.reset_stream(true)
+	st.ai_label = ""
 	page.clear()
 
 
 func _on_agent_assistant_reset(page: RichTextLabel) -> void:
-	var body: String = _page_to_body.get(page, "")
-	_page_to_stream_base[page] = body
-	_page_to_stream_reply[page] = ""
-	_page_to_display_reply_len[page] = 0
-	_page_to_typewriter_accum[page] = 0.0
-	_page_is_typing.erase(page) # 等收到 piece 后再标记为 typing
-	_page_to_stream_finished[page] = false
-	var ai_label := _ai_label_with_ts()
-	_page_to_ai_label[page] = ai_label
-	page.text = body + ai_label
+	var st := _state_for_page(page)
+	if st == null:
+		return
+	var saved_body := st.body
+	st.reset_stream(false)
+	st.stream_base = saved_body
+	st.ai_label = _ai_label_with_ts()
+	page.text = st.body + st.ai_label
 
 
 func _on_agent_assistant_piece(piece: String, page: RichTextLabel) -> void:
-	var reply: String = _page_to_stream_reply.get(page, "")
-	reply += piece
-	_page_to_stream_reply[page] = reply
-	_page_is_typing[page] = true
+	var st := _state_for_page(page)
+	if st == null:
+		return
+	st.stream_reply += piece
+	st.is_typing = true
 	set_process(true)
 
 
 func _on_agent_assistant_finished(page: RichTextLabel) -> void:
-	# finished 只标记“流结束”，不直接写死整段 text，
-	# 否则会抢在 _process 之前把打字机效果抹掉。
-	_page_to_stream_finished[page] = true
-	_page_is_typing[page] = true
+	var st := _state_for_page(page)
+	if st == null:
+		return
+	st.stream_finished = true
+	st.is_typing = true
 	set_process(true)
 
 
 func _on_agent_waiting_changed(waiting: bool, page: RichTextLabel) -> void:
-	_page_to_waiting[page] = waiting
+	var st := _state_for_page(page)
+	if st == null:
+		return
+	st.waiting = waiting
 	_refresh_tab_waiting_badges()
 	if page != _get_current_page():
 		return
@@ -326,10 +324,10 @@ func _sync_input_waiting_state() -> void:
 		_input_edit.editable = true
 		_send_btn.text = " Enter "
 		return
-	var controller: Node = _page_to_controller.get(page, null)
+	var st := _state_for_page(page)
 	var waiting := false
-	if controller != null:
-		waiting = controller.get("waiting_response") == true
+	if st != null and st.controller != null:
+		waiting = st.controller.get("waiting_response") == true
 	_send_btn.disabled = waiting
 	_input_edit.editable = not waiting
 	_send_btn.text = "[思考中]" if waiting else " Enter "
@@ -340,64 +338,76 @@ func _refresh_tab_waiting_badges() -> void:
 		var page := _contents.get_child(i) as RichTextLabel
 		if page == null:
 			continue
-		var base_title := str(_page_to_title.get(page, "Agent"))
-		var waiting := bool(_page_to_waiting.get(page, false))
+		var st := _state_for_page(page)
+		var base_title := st.base_title if st != null else "Agent"
+		var waiting := st.waiting if st != null else false
 		var shown := base_title + (" [思考中]" if waiting else "")
 		_contents.set_tab_title(i, shown)
 
 
+func _any_page_typing() -> bool:
+	for st in _page_states.values():
+		if st is AgentPageState and (st as AgentPageState).is_typing:
+			return true
+	return false
+
+
 func _process(delta: float) -> void:
-	if _page_is_typing.is_empty():
+	if not _any_page_typing():
 		set_process(false)
 		return
 
-	for page in _page_is_typing.keys():
-		var full_reply: String = _page_to_stream_reply.get(page, "")
+	for page in _page_states.keys():
+		var st := _state_for_page(page)
+		if st == null or not st.is_typing:
+			continue
+
+		var full_reply: String = st.stream_reply
 		var target_len := full_reply.length()
 		if target_len <= 0:
 			continue
 
-		var display_len: int = int(_page_to_display_reply_len.get(page, 0))
+		var display_len: int = st.display_reply_len
 		if display_len >= target_len:
-			var finished := bool(_page_to_stream_finished.get(page, false))
-			if not finished:
+			if not st.stream_finished:
 				continue
-
-			# 追赶完成后再落地最终渲染（带 \n\n）。
-			var base: String = _page_to_stream_base.get(page, "")
-			var shown_reply: String = full_reply
-			var ai_label: String = _page_to_ai_label.get(page, _ai_label_with_ts())
-			var body := base + ai_label + _esc(shown_reply) + "\n"
-			_page_to_body[page] = body
-			_page_to_typewriter_accum[page] = 0.0
-			_page_is_typing.erase(page)
-			_page_to_stream_finished.erase(page)
-			page.text = body
-
-			if _page_is_typing.is_empty():
+			_finalize_stream_render(st)
+			if not _any_page_typing():
 				set_process(false)
 			continue
 
 		var behind: int = target_len - display_len
 		var speed: float = TYPEWRITER_CPS_BASE + minf(float(behind) * 1.8, TYPEWRITER_CPS_MAX - TYPEWRITER_CPS_BASE)
-
-		var accum: float = float(_page_to_typewriter_accum.get(page, 0.0))
+		var accum: float = st.typewriter_accum
 		accum += delta * speed
-
 		var inc := int(floor(accum))
 		if inc <= 0:
-			_page_to_typewriter_accum[page] = accum
+			st.typewriter_accum = accum
 			continue
-
 		var new_len: int = min(target_len, display_len + inc)
 		accum -= float(new_len - display_len)
-		_page_to_typewriter_accum[page] = accum
-		_page_to_display_reply_len[page] = new_len
+		st.typewriter_accum = accum
+		st.display_reply_len = new_len
+		_render_stream_preview(st, new_len)
 
-		var base: String = _page_to_stream_base.get(page, "")
-		var shown_reply: String = full_reply.substr(0, new_len)
-		var ai_label: String = _page_to_ai_label.get(page, _ai_label_with_ts())
-		page.text = base + ai_label + _esc(shown_reply)
+
+func _render_stream_preview(st: AgentPageState, display_len_override: int = -1) -> void:
+	var display_len: int = st.display_reply_len
+	if display_len_override >= 0:
+		display_len = display_len_override
+	display_len = min(display_len, st.stream_reply.length())
+	var shown_reply: String = st.stream_reply.substr(0, display_len)
+	var label := st.ai_label if not st.ai_label.is_empty() else _ai_label_with_ts()
+	st.page.text = st.stream_base + label + _esc(shown_reply)
+
+
+func _finalize_stream_render(st: AgentPageState) -> void:
+	var label := st.ai_label if not st.ai_label.is_empty() else _ai_label_with_ts()
+	st.body = st.stream_base + label + _esc(st.stream_reply) + "\n"
+	st.typewriter_accum = 0.0
+	st.is_typing = false
+	st.stream_finished = false
+	st.page.text = st.body
 
 
 func _ts() -> String:

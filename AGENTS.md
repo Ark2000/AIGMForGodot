@@ -48,7 +48,7 @@ AIGMForGodot/
 │   │   ├── llm_talk_cursor/   # LLM chat + tool call system
 │   │   │   ├── aigm_stream.gd # Core LLM streaming controller
 │   │   │   ├── agents_wnd.gd  # Multi-agent UI manager
-│   │   │   ├── commands.gd    # Godot expression tool definitions
+│   │   │   ├── commands.gd    # Agent Lua tool (stdlib-only sandbox via lua-gdextension)
 │   │   │   ├── config.json    # API configuration (gitignored)
 │   │   │   └── config.example.json
 │   │   ├── rpgmaker_kimi/     # RPG Maker-style editor prototype
@@ -75,13 +75,15 @@ AIGMForGodot/
 
 ## Key Components
 
-### 1. AIGM Core System (`tests/llm_talk_cursor/`)
+### 1. AIGM Core System (`addons/aigm/`)
 
-**aigm_stream.gd**: Main LLM controller
-- Streaming chat completion via HTTPClient + SSE
-- Multi-turn conversation with message history
-- Tool call loop (up to 8 rounds)
-- Supports OpenAI-compatible API endpoints
+**aigm_stream.gd**: Main LLM controller (thin layer)
+- Owns HTTPClient/TLS, timers, UI signals, tool execution (`commands.gd`)
+- Conversation state, Kimi/OpenAI request JSON, SSE parsing, and tool-call merging live in **`addons/aigm/lua/`** (loaded by `aigm_lua_host.gd`)
+
+**`addons/aigm/lua/`** (pure Lua, no Godot): `aigm.lua` → `api.lua` (session, payloads, stream), `sse.lua`, `tool_merge.lua`, `url.lua`, `json.lua` (rxi)
+
+**aigm_lua_host.gd**: Instantiates lua-gdextension `LuaState` (with `package` + `res://` paths), `require("aigm")`, bridges GDScript ↔ Lua via JSON strings
 
 **agents_wnd.gd**: Multi-agent UI
 - Tabbed interface for multiple parallel agents
@@ -89,16 +91,9 @@ AIGMForGodot/
 - Hotkey: `` ` `` (backtick) or `F1` to toggle
 - Dynamic tab creation/closing
 
-**commands.gd**: Godot Expression Sandbox
-- Tool definition for LLM function calling
-- Sandboxed GDScript expression execution
-- Available methods:
-  - `expr_get_engine_version()` - Get Godot version
-  - `expr_get_os_name()` - Get OS name
-  - `expr_print(text)` - Print to output
-  - `expr_set_window_title(title)` - Set window title
-  - `expr_set_chat_background_color(hex)` - Set UI color
-  - `expr_npc_talk(text)` - Make NPC speak (via spectator camera)
+**commands.gd**: Agent Lua tool (host-side runner)
+- Single LLM tool `aigm_lua_run`: runs a **standard Lua** snippet (lua-gdextension `LuaState` with only `LUA_*` libraries opened, no `GODOT_*` bindings)
+- Agent code has no Godot API inside the VM; host GDScript is only the runner and UI
 
 ### 2. Test Sandbox (`tests/testsandbox/`)
 
@@ -130,7 +125,7 @@ Prototype RPG Maker-style editor with:
 
 ### API Configuration
 
-Copy `tests/llm_talk_cursor/config.example.json` to `config.json`:
+Copy `addons/aigm/config.example.json` to `config.json`:
 
 ```json
 {
@@ -138,7 +133,7 @@ Copy `tests/llm_talk_cursor/config.example.json` to `config.json`:
   "api_key": "YOUR_API_KEY_HERE",
   "model": "kimi-k2-turbo-preview",
   "max_tokens": 8192,
-  "enable_godot_tools": true,
+  "enable_tools": true,
   "debug_tool_trace": false,
   "debug_aigm_trace": false
 }
@@ -225,10 +220,9 @@ func _physics_process(delta: float) -> void:
 ### Manual Testing
 
 1. **LLM Chat**: Toggle UI with `` ` ``, send message, verify streaming response
-2. **Tool Calls**: Ask AI to "print hello" or "set window title to Test"
-3. **NPC Control**: Ask AI to "make NPC say hello" (requires NPC in camera view)
-4. **Combat**: Press J to attack, verify damage and AI reaction
-5. **Foraging**: Watch NPCs automatically seek food when hungry
+2. **Tool Calls**: Ask AI to run a small Lua snippet via `aigm_lua_run` (e.g. `return 2+2`)
+3. **Combat**: Press J to attack, verify damage and AI reaction
+4. **Foraging**: Watch NPCs automatically seek food when hungry
 
 ### Test Scenes
 
