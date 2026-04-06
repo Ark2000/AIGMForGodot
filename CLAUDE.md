@@ -31,17 +31,19 @@ Dependencies: `pip install httpx openai`
 
 ## Architecture
 
-This is a **single-file Lua agent** (`lua_agent.lua`) that drives a Kimi (Moonshot) LLM via a thin Python bridge.
+A Lua agent (`lua_agent.lua`) drives a Kimi (Moonshot) LLM via a thin Python bridge, split across three Lua modules and one Python shim.
 
 ```
-lua_agent.lua
-  └─ bootstrap_session()      load doc → load messages → write tools.json → save messages
-  └─ llm_round()              agentic loop:
-       save_messages → os.execute(kimi.py) → read output.json
-       if finish_reason == "tool_calls":
-         for each call: sandbox_run(code) → append role:tool → save → repeat
-       else: return final assistant message
-  └─ sandbox_run()            load(code, "t", restricted_env) + debug.sethook instruction limit
+lua_agent.lua                 Config, CLI, session bootstrap, kimi invocation, agentic loop, --test
+  require("json")  → json.lua       rxi/json.lua (MIT) — encode/decode
+  require("sandbox") → sandbox.lua  restricted Lua execution; sandbox.run(code, cfg) → string
+
+  bootstrap_session()   load doc → load messages → write tools.json → save messages
+  llm_round()           agentic loop:
+    save_messages → os.execute(kimi.py) → read output.json
+    if finish_reason == "tool_calls":
+      for each call: sandbox.run(code) → append role:tool → save → repeat
+    else: return final assistant message
 
 service_kimi/kimi.py          Python HTTP shim: reads messages.json + tools.json, calls Moonshot API,
                                writes output.json. Stateless — all session state lives in the JSON files.
@@ -59,7 +61,7 @@ service_kimi/kimi.py          Python HTTP shim: reads messages.json + tools.json
 
 | Path | Role |
 |------|------|
-| `lua_agent.lua` | Config, CLI, atomic write, tools schema, session load/save, kimi.py invocation, sandbox, main loop, `--test` self-check |
+| `lua_agent.lua` | Config, CLI, atomic write, tools schema, session load/save, kimi.py invocation, main loop, `--test` self-check |
 | `json.lua` | rxi/json.lua (MIT) — encode/decode; `require`d by `lua_agent.lua` |
 | `sandbox.lua` | Restricted Lua execution environment; `sandbox.run(code, cfg)` → string; extend here to add new sandbox APIs |
 | `service_kimi/kimi.py` | Python HTTP shim; do not add business logic here |
