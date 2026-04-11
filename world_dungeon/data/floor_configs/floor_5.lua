@@ -1,0 +1,20 @@
+return {
+    id    = "floor_5",
+    floor = 5,
+    room_count   = { min=8, max=11 },
+    room_types   = { corridor=0.2, chamber=0.4, monster_lair=0.3, treasure_room=0.1 },
+    connectivity = "sparse",
+    monster_density = 0.5,
+    monster_pool    = { "troll", "orc" },
+    loot_density    = 0.3,
+    loot_pool       = { "greater_health_potion", "chain_mail", "iron_sword" },
+    boss            = "dragon",
+    difficulty      = 5,
+    recommended_level = 6,
+    ecology = {
+        min_population  = 2,
+        max_population  = 10,
+        respawn_delay   = 3000,
+        spawn_per_cycle = 1,
+    },
+}

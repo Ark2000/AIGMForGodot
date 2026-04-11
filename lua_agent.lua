@@ -12,6 +12,9 @@ local config = {
   lua_doc_path = "docs/agent_lua_ref.md",
   tool_name = "run_lua",
   sandbox_max_instructions = 5000000,
+  events_path = "events.jsonl",
+  world_path = "world.json",
+  agent_state_path = nil,  -- derived: session_dir/agent_state.json
 }
 
 local user_message
@@ -292,6 +295,9 @@ local function main()
     io.stderr:write("usage: lua_agent.lua [options] -- <message>   or pipe message on stdin\n")
     os.exit(2)
   end
+  if not config.agent_state_path then
+    config.agent_state_path = join_path(config.session_dir, "agent_state.json")
+  end
   local messages = bootstrap_session(config)
   table.insert(messages, { role = "user", content = user_message })
   local out, err = llm_round(messages, config)
@@ -325,6 +331,37 @@ local function run_self_test()
   assert(e1:find("x"))
   local bad = sandbox.run("+++", scfg)
   assert(bad:sub(1, 9) == "[compile]" or bad:sub(1, 7) == "[error]")
+
+  -- sandbox: json_encode / json_decode
+  assert(sandbox.run("return json_encode({k=1})", scfg):find('"k"'))
+  assert(sandbox.run("return json_decode('{\"n\":7}').n", scfg) == "7")
+
+  -- sandbox: state_get / state_set round-trip
+  local state_tmp  = "z_test_state.json"
+  local events_tmp = "z_test_events.jsonl"
+  local scfg2 = {
+    sandbox_max_instructions = 5000000,
+    tool_name = "run_lua",
+    agent_state_path = state_tmp,
+    events_path = events_tmp,
+  }
+  assert(sandbox.run("state_set('x', 99); return state_get('x')", scfg2) == "99")
+  assert(sandbox.run("state_set('t', {a=1}); return state_get('t').a", scfg2) == "1")
+
+  -- sandbox: events_read cursor advancement
+  local ef = assert(io.open(events_tmp, "wb"))
+  ef:write('{"t":1,"type":"foo","data":{}}\n')
+  ef:write('{"t":2,"type":"bar","data":{}}\n')
+  ef:close()
+  local evs1 = sandbox.run("return events_read(10)", scfg2)
+  assert(json.decode(evs1)[1].type == "foo", "first read should return 2 events starting with foo")
+  assert(#json.decode(evs1) == 2)
+  local evs2 = sandbox.run("return events_read(10)", scfg2)
+  assert(#json.decode(evs2) == 0, "second read should be empty (cursor advanced)")
+
+  os.remove(state_tmp)
+  os.remove(events_tmp)
+
   print("OK")
 end
 
